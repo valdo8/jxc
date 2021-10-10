@@ -2553,6 +2553,7 @@ BsRegWin::BsRegWin(QWidget *parent, const QString &name, const QStringList &fiel
     mpAcOptHideDropRow->setProperty(BSACRIGHT, canDo(mRightWinName, bsrrDel));
     mpAcToolImport->setProperty(BSACRIGHT, canDo(mRightWinName, bsrrNew));
     mpAcToolExport->setProperty(BSACRIGHT, canDo(mRightWinName, bsrrExport));
+    mpAcToolExport->setProperty(BSACFLAGS, bsacfClean);
 
 
     //工具箱（没有设计表格行变化动态更新按钮的事件，因此RegWin不要使用bsacfPlusId与bsacfChecked等相关位）
@@ -2779,7 +2780,7 @@ void BsRegWin::doToolImport()
 bool BsRegWin::isValidRealSheetId()
 {
     int row = mpGrid->currentRow();
-    return row >= 0 && mpGrid->item(row, 0)->text().trimmed().isEmpty();
+    return row >= 0 && !mpGrid->item(row, 0)->text().trimmed().isEmpty();
 }
 
 void BsRegWin::doOpenEditMode()
