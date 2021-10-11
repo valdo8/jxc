@@ -26,16 +26,19 @@ bool is_little_endian()
 //判断使用系统是否Win64
 bool osIsWin64 ()
 {
+#ifndef Q_OS_UNIX
     SYSTEM_INFO si;
     memset(&si, 0, sizeof(si));
     typedef void (WINAPI *LPFN_PGNSI)(LPSYSTEM_INFO);
     LPFN_PGNSI pGNSI = LPFN_PGNSI(GetProcAddress(GetModuleHandleA(("kernel32.dll")),"GetNativeSystemInfo"));
 
-    if (pGNSI)
+    if (pGNSI) {
         pGNSI(&si);
+    }
 
     if (si.wProcessorArchitecture == PROCESSOR_ARCHITECTURE_AMD64)
         return true;
+#endif
 
     return false;
 }

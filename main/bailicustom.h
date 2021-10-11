@@ -1,8 +1,10 @@
 #ifndef BAILICUSTOM_H
 #define BAILICUSTOM_H
 
-#include "Dongle_API.h"     //省略路径，则pro文件中必须有INCLUDEPATH+=...
 #include <QtCore>
+#ifdef Q_OS_WIN
+#include "Dongle_API.h"     //省略路径，则pro文件中必须有INCLUDEPATH+=...
+#endif
 
 //由于网络服务市场方案，不需要防盗版，只需识别，故而未用到狗数据区，只用到数据文件。
 

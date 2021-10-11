@@ -5,7 +5,9 @@
 #include "main/bailifunc.h"
 #include "main/bailiwins.h"
 
+#ifdef Q_OS_WIN
 #include "Dongle_API.h"     //省略路径，则pro文件中必须有INCLUDEPATH+=...
+#endif
 
 namespace BailiSoft {
 
@@ -182,6 +184,8 @@ void LxSalesManage::makeHard()
         return;
 
     mpBtnMakeHard->setEnabled(false);
+
+#ifdef Q_OS_WIN
 
     //锁操作返回值
     DWORD dwRet = 0;
@@ -516,6 +520,7 @@ void LxSalesManage::makeHard()
     else {
         mpReport->setPlainText(QStringLiteral("烧制成功，网络后台验证码为：%1").arg(netPass));
     }
+#endif
 }
 
 void LxSalesManage::makeSoft()
@@ -524,6 +529,8 @@ void LxSalesManage::makeSoft()
         return;
 
     mpBtnMakeSoft->setEnabled(false);
+
+#ifdef Q_OS_WIN
 
     //锁操作返回值
     DWORD dwRet = 0;
@@ -658,6 +665,7 @@ void LxSalesManage::makeSoft()
     //报告
     mpReport->setPlainText(QStringLiteral("软锁制作成功，网络后台账号为：%1，验证码为：%2，软锁保存为：D:/%1.key")
                            .arg(mpNetName->text()).arg(netPass));
+#endif
 }
 
 bool LxSalesManage::checkInputValid()

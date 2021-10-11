@@ -171,31 +171,31 @@ win32 {     #win32 means all windows platform not only win_x86
 }
 else {
     macx {
-        INCLUDEPATH += $$PWD/third/RockeyDog/mac
+        #INCLUDEPATH += $$PWD/third/RockeyDog/mac
         #DESTDIR = /Users/roger/BailiR17Dist
         #TARGET = BailiR17Mac64
-        LIBS += -L$$PWD/third/RockeyDog/mac -lRockeyARM
+        #LIBS += -L$$PWD/third/RockeyDog/mac -lRockeyARM
         ICON = resources/maclogo.icns        
-        QMAKE_POST_LINK += $$quote(cp /Users/roger/Downloads/br17demo.dat $$DESTDIR/BailiR17.app/Contents/MacOS/$$escape_expand(\n\t))
+        #QMAKE_POST_LINK += $$quote(cp /Users/roger/Downloads/br17demo.dat $$DESTDIR/BailiR17.app/Contents/MacOS/$$escape_expand(\n\t))
         message("Mac OS X compiler")
     }
     else {
-        INCLUDEPATH += $$PWD/third/RockeyDog/linux
+        #INCLUDEPATH += $$PWD/third/RockeyDog/linux
 
         SPECVALUE_X64FLAG = $$find(QMAKESPEC, 64)            #test to see $$QMAKESPEC's value
         isEmpty(SPECVALUE_X64FLAG) {
             #DESTDIR = /home/roger/BailiR17Dist32
             #TARGET = BailiR17Unx32
-            LIBS += -L$$PWD/third/RockeyDog/linux/api32 -llibRockeyARM
+            #LIBS += -L$$PWD/third/RockeyDog/linux/api32 -llibRockeyARM
             message("UNIX x32 compiler")
         }
         else {
             #DESTDIR = /home/roger/BailiR17Dist64
             #TARGET = BailiR17Unx64
-            LIBS += -L$$PWD/third/RockeyDog/linux/api64 -llibRockeyARM
+            #LIBS += -L$$PWD/third/RockeyDog/linux/api64 -llibRockeyARM
             message("UNIX x64 compiler")
         }
-        QMAKE_POST_LINK += $$quote(cp /home/roger/Downloads/br17demo.dat $$DESTDIR/$$escape_expand(\n\t))
+        #QMAKE_POST_LINK += $$quote(cp /home/roger/Downloads/br17demo.dat $$DESTDIR/$$escape_expand(\n\t))
     }
 }
 

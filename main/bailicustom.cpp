@@ -8,9 +8,6 @@ namespace BailiSoft {
 //公共版本号
 QString                 versionLicenseName  = QString();
 
-//飞天狗句柄
-DONGLE_HANDLE           hDongle         = nullptr;
-
 //授权狗信息
 bool                    dogOk           = false;    //飞天狗OK
 bool                    dogFoundMother  = false;    //开发母狗
@@ -24,12 +21,15 @@ QString                 dogNetPass      = QString();
 QString                 httpUserName    = QString();
 QString                 httpPassHash    = QString();
 
-//R17永久固定值，已分发狗已经使用
-static const char *dogUserPin  = "j$aEj=6uT$qd9TM3";
+#ifdef Q_OS_WIN
+DONGLE_HANDLE           hDongle         = nullptr;
+static const char *dogUserPin  = "j$aEj=6uT$qd9TM3";  //R17永久固定值，已分发狗已经使用
+#endif
 
 //检查读锁（硬锁）
 void checkLicenseDog()
 {
+#ifdef Q_OS_WIN
     //名称先缺省为试用版，后面有从狗中读取用户公司名称。
     dogUserName = mapMsg.value("app_dog_user_try");
 
@@ -154,6 +154,7 @@ void checkLicenseDog()
         strm << QStringLiteral("%1\n%2\n%3").arg(dogUserName).arg(dogNetName).arg(dogNetPass);
         file.close();
     }
+#endif
 }
 
 //检查读锁（软锁）

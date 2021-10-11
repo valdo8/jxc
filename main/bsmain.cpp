@@ -8,7 +8,6 @@
 #include "bailiserver.h"
 #include "bailipublisher.h"
 #include "bsmain.h"
-#include "admin_sales/lxsalesmanage.h"
 #include "dialog/bsloginguide.h"
 #include "dialog/bssetpassword.h"
 #include "dialog/bslicwarning.h"
@@ -23,7 +22,9 @@
 #include "tools/bsbarcodemaker.h"
 #include "tools/bslabeldesigner.h"
 #include "tools/bstoolstockreset.h"
-
+#ifdef Q_OS_WIN
+#include "admin_sales/lxsalesmanage.h"
+#endif
 
 namespace BailiSoft {
 
@@ -397,6 +398,7 @@ void BsMain::keyPressEvent(QKeyEvent *e)
 {
     QMainWindow::keyPressEvent(e);
 
+#ifdef Q_OS_WIN
     if ( dogFoundMother ) {
 
         //自用
@@ -442,6 +444,7 @@ void BsMain::keyPressEvent(QKeyEvent *e)
 
         }
     }
+#endif
 }
 
 void BsMain::resizeEvent(QResizeEvent *e)
