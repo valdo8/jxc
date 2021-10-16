@@ -6,6 +6,16 @@
 
 namespace BailiSoft {
 
+class SyncJob {
+public:
+    SyncJob(){}
+    SyncJob(const QString &shop, const QString &relSheetTable, const int relSheetId)
+        : mShop(shop), mRelSheetTable(relSheetTable), mRelSheetId(relSheetId) {}
+    QString mShop;
+    QString mRelSheetTable;
+    int     mRelSheetId;
+};
+
 class BsPublisher : public QThread
 {
     Q_OBJECT
@@ -18,7 +28,7 @@ public:
     bool logined() { return !mDatabaseFile.isEmpty(); }
 
 public slots:
-    void addJob(const QString &shop);
+    void addJob(const QString &shop, const QString &relSheetTable, const int relSheetId);
 
 private:
     void    run() override;
@@ -29,12 +39,11 @@ private:
     QWaitCondition          mBookCondition;
     bool                    mBookWaiting = true;
 
-    QQueue<QString>         mJobs;
+    QQueue<SyncJob>         mJobs;
     QMutex                  mWorkMutex;
     QWaitCondition          mWorkCondition;
 
-    QString                 mLastShop;
-    qint64                  mLastSeconds;
+    QMap<QString, qint64>   mSyncStockLog;
 };
 
 }

@@ -247,7 +247,7 @@ void BsServer::tcpReadReady()
                         connect(worker, SIGNAL(transferReady(QByteArray)), this, SLOT(queueSocketWrite(QByteArray)));
                         connect(worker, SIGNAL(finished()), worker, SLOT(deleteLater()));
                         connect(worker, SIGNAL(finished()), this, SLOT(workerFinished()));
-                        connect(worker, SIGNAL(shopStockChanged(QString)), this, SIGNAL(shopStockChanged(QString)));
+                        connect(worker, &BsTerminator::shopStockChanged, this, &BsServer::shopStockChanged);
                         worker->start();
                         mThreads << worker;
                         mWorkings++;

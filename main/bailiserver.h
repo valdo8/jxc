@@ -23,7 +23,7 @@ signals:
     void serverStarted(const qint64 licDate);
     void serverStopped();
     void startFailed(const QString &errMsg);
-    void shopStockChanged(const QString &shop);
+    void shopStockChanged(const QString &shop, const QString &relSheet, const int relId);
 
 private slots:
     void lookupAddressFinished();

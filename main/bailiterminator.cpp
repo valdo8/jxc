@@ -1687,7 +1687,7 @@ QString BsTerminator::reqBizInsert(const QString &packstr, const BsFronter *user
          tname == QStringLiteral("lsd") ||
          tname == QStringLiteral("dbd") ||
          tname == QStringLiteral("syd") ) {
-        emit shopStockChanged(shopValue);
+        emit shopStockChanged(shopValue, tname, sheetId);
     }
 
     //日志

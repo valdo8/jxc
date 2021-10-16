@@ -19,7 +19,7 @@ public:
 signals:
     void responseReady(const QByteArray &toServerData);
     void transferReady(const QByteArray &toServerData);
-    void shopStockChanged(const QString &shop);
+    void shopStockChanged(const QString &shop, const QString &relSheet, const int relId);
 
 private:
     QStringList getMessageReceiverIds(const QString &chatTo, BsFronter *sender);

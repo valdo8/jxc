@@ -2604,6 +2604,10 @@ BsRegWin::BsRegWin(QWidget *parent, const QString &name, const QStringList &fiel
         mpToolBar->insertAction(mpAcToolSeprator, mpAcAmTag);
         mpAcAmTag->setProperty(BSACFLAGS, bsacfClean);
         mpAcAmTag->setProperty(BSACRIGHT, loginAsAdminOrBoss);
+
+        mpToolAmUnTag = mpMenuToolCase->addAction(QStringLiteral("删除平台标签"), this, SLOT(clickToolAmUnTag()));
+        mpToolAmUnTag->setProperty(BSACFLAGS, bsacfClean);
+        mpToolAmUnTag->setProperty(BSACRIGHT, loginAsAdminOrBoss);
     }
 
     //表格
@@ -2937,7 +2941,9 @@ void BsRegWin::clickAmGeo()
     QString response = QString::fromUtf8(reply->readAll());
     if ( response == QStringLiteral("OK") ) {
         //经度在前，纬度在后，中间逗号。这个约定已有多处使用，不要随便动。
-        QString geoText = QStringLiteral("%1,%2").arg(dlg.mpLng->text()).arg(dlg.mpLat->text());
+        QString sx = QString::number(dlg.mpLng->text().toDouble() + 0.00000001, 'f', 6);
+        QString sy = QString::number(dlg.mpLat->text().toDouble() + 0.00000001, 'f', 6);
+        QString geoText = QStringLiteral("%1,%2").arg(sx).arg(sy);
         int geoIdx = mpGrid->getColumnIndexByFieldName("amgeo");
         mpGrid->item(mpGrid->currentRow(), geoIdx)->setText(geoText);
         QString sql = QStringLiteral("update shop set amgeo='%1' where kname='%2';").arg(geoText).arg(shop);
@@ -2952,7 +2958,7 @@ void BsRegWin::clickAmGeo()
                                                                  "用户能搜索到。"));
     }
     else if ( response == QStringLiteral("EX") ) {
-        QMessageBox::information(this, QString(), QStringLiteral("该店已经定过坐标！"));
+        QMessageBox::information(this, QString(), QStringLiteral("该坐标已有门店登记！"));
     }
     else {
         QMessageBox::information(this, QString(), QStringLiteral("定坐标失败，请稍后重试。"));
@@ -3022,7 +3028,6 @@ void BsRegWin::clickToolAmUnGeo()
             qDebug() << sql << "\n" << qry.lastError().text();
             return;
         }
-        QMessageBox::information(this, QString(), QStringLiteral("删除门店坐标成功。"));
     }
     else {
         QMessageBox::information(this, QString(), QStringLiteral("删除门店坐标失败，请稍后重试。"));
@@ -3084,31 +3089,53 @@ void BsRegWin::clickAmTag()
     }
     QString response = QString::fromUtf8(reply->readAll());
     if ( response == QStringLiteral("OK") ) {
-        if ( taged.isEmpty() ) {
-            //库存变动系统自动上下架,非客户手动。此处仅作本地标记
-            int tagIdx = mpGrid->getColumnIndexByFieldName("amtag");
-            mpGrid->item(mpGrid->currentRow(), tagIdx)->setText(cargoTag);
-            QString sql = QStringLiteral("update cargo set amtag='%1' where hpcode='%2';").arg(cargoTag).arg(hpcode);
-            QSqlQuery qry;
-            qry.exec(sql);
-            if ( qry.lastError().isValid() ) {
-                qDebug() << sql << "\n" << qry.lastError().text();
-                return;
-            }
-            QMessageBox::information(this, QString(), QStringLiteral("打标签成功。请多关注和推广本平台。"));
+        //库存变动系统自动上下架,非客户手动。此处仅作本地标记，但必须，用于库存同步。
+        int tagIdx = mpGrid->getColumnIndexByFieldName("amtag");
+        mpGrid->item(mpGrid->currentRow(), tagIdx)->setText(cargoTag);
+        QString sql = QStringLiteral("update cargo set amtag='%1' where hpcode='%2';").arg(cargoTag).arg(hpcode);
+        QSqlQuery qry;
+        qry.exec(sql);
+        if ( qry.lastError().isValid() ) {
+            qDebug() << sql << "\n" << qry.lastError().text();
+            return;
         }
-        else {
-            QMessageBox::information(this, QString(), QStringLiteral("重新上传图片成功！"));
-        }
+        QMessageBox::information(this, QString(), QStringLiteral("打标签成功。请多关注和推广本平台。"));
     }
     else {
-        if ( taged.isEmpty() ) {
-            QMessageBox::information(this, QString(), QStringLiteral("打标签失败，请稍候重试。"));
-        }
-        else {
-            QMessageBox::information(this, QString(), QStringLiteral("重新上传图片失败，请稍候再试。"));
-        }
+        QMessageBox::information(this, QString(), QStringLiteral("打标签失败，请稍候重试。"));
     }
+}
+
+void BsRegWin::clickToolAmUnTag()
+{
+    if ( mpGrid->currentRow() < 0 ) {
+        QMessageBox::information(this, QString(), mapMsg.value("i_please_pick_a_row"));
+        return;
+    }
+
+    QString hpcode = mpGrid->item(mpGrid->currentRow(), 0)->text();
+    int tagIdx = mpGrid->getColumnIndexByFieldName("amtag");
+    Q_ASSERT(tagIdx >= 0);
+
+    QString tipMsg = QStringLiteral("删除标签后该货品将不再被“爱美无价”用户搜索到。");
+    QString askMsg = QStringLiteral("确定要删除“%1”平台标签吗？").arg(hpcode);
+    if ( ! confirmDialog(this, tipMsg, askMsg,
+                         mapMsg.value("btn_ok"),
+                         mapMsg.value("btn_cancel"),
+                         QMessageBox::Warning) ) {
+        return;
+    }
+
+    //库存变动系统自动上下架,非客户手动。此处仅作本地标记，但必须，用于库存同步。
+    QString sql = QStringLiteral("update cargo set amtag='' where hpcode='%1';").arg(hpcode);
+    QSqlQuery qry;
+    qry.exec(sql);
+    if ( qry.lastError().isValid() ) {
+        qDebug() << sql << "\n" << qry.lastError().text();
+        QMessageBox::information(this, QString(), QStringLiteral("删除平台标签失败。"));
+        return;
+    }
+    mpGrid->item(mpGrid->currentRow(), tagIdx)->setText(QString());
 }
 
 bool BsRegWin::checkGetTags()
@@ -3855,6 +3882,7 @@ void BsAbstractSheetWin::doCheck()
         mpSttValChecker->setText(loginer);
         mpSttValChkTime->setText(QDateTime::fromMSecsSinceEpoch(1000 * chktime).toString("yyyy-MM-dd hh:mm:ss"));
         doSyncFindGrid();
+        emit shopStockChanged(mpShop->mpEditor->getDataValue(), mMainTable, mCurrentSheetId);
         QMessageBox::information(this, QString(), mapMsg.value("i_check_sheet_success"));
     }
 }
@@ -4067,7 +4095,6 @@ void BsAbstractSheetWin::doSave() //注意与openSheet()的一致性
         savedReconcile(useSheetId, uptime);
         setEditable(false);
         doSyncFindGrid();
-        emit shopStockChanged(mpShop->mpEditor->getDataValue());
     }
     else {
         QMessageBox::information(this, QString(), sqlErr);
@@ -4151,6 +4178,7 @@ void BsAbstractSheetWin::clickToolUnCheck()
         mpSttValChecker->setText(QString());
         mpSttValChkTime->setText(QString());
         doSyncFindGrid();
+        emit shopStockChanged(mpShop->mpEditor->getDataValue(), mMainTable, mCurrentSheetId);
         QMessageBox::information(this, QString(), mapMsg.value("i_uncheck_sheet_success"));
     }
 }

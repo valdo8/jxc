@@ -301,6 +301,10 @@ QNetworkReply* httpRequest(const QString &path, const QString &reqData, const QS
         //请求结构
         const QUrl url = QUrl::fromUserInput(hostAddr + path);
         QNetworkRequest request(url);
+		QSslConfiguration sslConf = QSslConfiguration::defaultConfiguration();
+        sslConf.setPeerVerifyMode(QSslSocket::VerifyNone);
+        sslConf.setProtocol(QSsl::TlsV1SslV3);
+        request.setSslConfiguration(sslConf);
         request.setHeader(QNetworkRequest::ContentTypeHeader, "application/octet-stream");
 
         //POST数据体

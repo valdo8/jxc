@@ -55,7 +55,7 @@ BsTagSelectDlg::BsTagSelectDlg(QWidget *parent, const QString &cargo, const QStr
     mpResultLabel->setFixedWidth(200);
     mpResultLabel->setWordWrap(true);
     mpResultLabel->setAlignment(Qt::AlignCenter);
-    if ( mTagged.isEmpty() ) mpResultLabel->setStyleSheet(QLatin1String("color:red;"));
+    mpResultLabel->setStyleSheet(QLatin1String("color:red;"));
 
     QPushButton *pBtnOk = new QPushButton(QIcon(":/icon/ok.png"), mapMsg.value("btn_ok"));
     pBtnOk->setIconSize(QSize(20, 20));
@@ -85,10 +85,8 @@ BsTagSelectDlg::BsTagSelectDlg(QWidget *parent, const QString &cargo, const QStr
     lay->addWidget(pnlImage);
     lay->addWidget(pnlDlg);
 
-    pnlList->setVisible(mTags.indexOf(mTagged) < 0);
-
     setFixedSize(sizeHint());
-    setWindowTitle((tagged.isEmpty()) ? QStringLiteral("打标签") : QStringLiteral("重传图片"));
+    setWindowTitle(QStringLiteral("打标签"));
     setWindowFlags(windowFlags() &~ Qt::WindowContextHelpButtonHint);
 
     pBtnCancel->setFocus();
@@ -112,7 +110,11 @@ void BsTagSelectDlg::loadImage()
     }
 
     mShowFile = openFile;
-    mpLblImage->setPixmap(QPixmap(openFile).scaled(mpLblImage->size(), Qt::KeepAspectRatio, Qt::SmoothTransformation));
+    QImageReader imgReader(mShowFile);
+    imgReader.setAutoTransform(true);  //use QImage(filename) directly cannot detect orientation correctly
+    QImage img = imgReader.read();
+    mpLblImage->setPixmap(QPixmap::fromImage(img).scaled(mpLblImage->size(),
+                                                         Qt::KeepAspectRatio, Qt::SmoothTransformation));
 }
 
 void BsTagSelectDlg::clickOk()

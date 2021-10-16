@@ -24,7 +24,7 @@ void BsPublisher::bookLogout()
     if ( mDatabaseFile.isEmpty() ) {
         mBookCondition.wakeOne();
     } else {
-        mJobs.enqueue(QString());
+        mJobs.enqueue(SyncJob(QString(), QString(), 0));
         mWorkCondition.wakeOne();
     }
 }
@@ -35,10 +35,10 @@ void BsPublisher::stopWait()
     bookLogout();
 }
 
-void BsPublisher::addJob(const QString &shop)
+void BsPublisher::addJob(const QString &shop, const QString &relSheetTable, const int relSheetId)
 {
     if ( !shop.isEmpty() ) {
-        mJobs.enqueue(shop);
+        mJobs.enqueue(SyncJob(shop, relSheetTable, relSheetId));
         mWorkCondition.wakeOne();
     }
 }
@@ -75,7 +75,7 @@ void BsPublisher::run()
         forever {
 
             //处理对象
-            QString shop;
+            SyncJob job;
 
             //等待任务
             {
@@ -85,15 +85,10 @@ void BsPublisher::run()
                 }
 
                 //取得店名
-                shop = mJobs.dequeue();
-                if ( shop.isEmpty() ) {
+                job = mJobs.dequeue();
+                if ( job.mShop.isEmpty() ) {
                     break;
                 }
-            }
-
-            //防频
-            if ( shop == mLastShop && QDateTime::currentSecsSinceEpoch() - mLastSeconds < MIN_JOB_SPACE ) {
-                continue;
             }
 
             //处理
@@ -104,7 +99,7 @@ void BsPublisher::run()
 
             //是否定过坐标
             qint64 x = 0, y = 0;
-            QString sql = QStringLiteral("select amgeo from shop where kname='%1';").arg(shop);
+            QString sql = QStringLiteral("select amgeo from shop where kname='%1';").arg(job.mShop);
             qry.exec(sql);
             if ( qry.next() ) {
                 QStringList pairs = qry.value(0).toString().split(QChar(','));
@@ -120,14 +115,14 @@ void BsPublisher::run()
                 continue;
             }
 
-            //检索货品
+            //本店全部标签库存
             QMap<QString, QStringList> mapPubs;   //tag, cargos
             sql = QStringLiteral("select b.amtag, a.cargo, sum(a.qty) as stock "
                                  "from vi_stock as a "
                                  "inner join cargo as b on a.cargo=b.hpcode "
-                                 "where a.shop='%1' and length(b.amtag) > 0 "  //TODO...待改限已审...通知信号也改为审核时发出
+                                 "where a.shop='%1' and chktime>0 and length(b.amtag) > 0 "
                                  "group by b.amtag, a.cargo "
-                                 "having sum(a.qty)>0;").arg(shop);
+                                 "having sum(a.qty)>0;").arg(job.mShop);
             qry.exec(sql);
             while ( qry.next() ) {
                 QString k = qry.value(0).toString();
@@ -137,24 +132,72 @@ void BsPublisher::run()
             }
             qry.finish();
 
-            //整理结果
+            //准备参数
+            QString dels;
             QStringList tags;
             QStringList goods;
-            QMapIterator<QString, QStringList> it(mapPubs);
-            while ( it.hasNext() ) {
-                it.next();
-                QString k = it.key();
-                QStringList v = it.value();
-                tags << k;
-                goods << v.join(QChar(9));
+
+            //判断是否新的一天
+            QDateTime lastSync = QDateTime::fromSecsSinceEpoch(mSyncStockLog.value(job.mShop, 0));
+            QDateTime thisSync = QDateTime::currentDateTime();
+            if ( thisSync.date() != lastSync.date() ) {
+                //全部标签都提交（爱美平台特殊约定使用*标记dels）
+                dels = QStringLiteral("*");
+                QMapIterator<QString, QStringList> it(mapPubs);
+                while ( it.hasNext() ) {
+                    it.next();
+                    tags << it.key();
+                    goods << it.value().join(QChar(9));
+                }
+            }
+            else {
+                //仅提交本单涉及标签
+                QSet<QString> setRels;
+                sql = QStringLiteral("select b.amtag, sum(a.qty) as sumqty "
+                                     "from vi_%1 as a inner join cargo as b on a.cargo=b.hpcode "
+                                     "where a.sheetid=%2 and length(b.amtag)>0 "
+                                     "group by b.amtag;")
+                        .arg(job.mRelSheetTable).arg(job.mRelSheetId);
+                qry.exec(sql);
+                while ( qry.next() ) {
+                    setRels.insert(qry.value(0).toString());
+                }
+                qry.finish();
+
+                //整理待删除标签参数
+                QStringList delTags;
+                QSetIterator<QString> st(setRels);
+                while ( st.hasNext() ) {
+                    QString tag = st.next();
+                    if (!mapPubs.contains(tag)) {
+                        delTags << tag;
+                    }
+                }
+                dels = delTags.join(QChar(9));
+
+                //整理新库存参数（如此设计是为大量减少提交数据量）
+                QMapIterator<QString, QStringList> it(mapPubs);
+                while ( it.hasNext() ) {
+                    it.next();
+                    if (setRels.contains(it.key())) {
+                        tags << it.key();
+                        goods << it.value().join(QChar(9));
+                    }
+                }
+            }
+
+            //无打标签库存不请求提交
+            if ( tags.isEmpty() ) {
+                continue;
             }
 
             //准备数据
             QStringList params;
             params << QStringLiteral("backer\x01%1").arg(dogNetName)
-                   << QStringLiteral("shop\x01%1").arg(shop)
+                   << QStringLiteral("shop\x01%1").arg(job.mShop)
                    << QStringLiteral("x\x01%1").arg(x)
                    << QStringLiteral("y\x01%1").arg(y)
+                   << QStringLiteral("dels\x01%1").arg(dels)
                    << QStringLiteral("tags\x01%1").arg(tags.join(QChar(10)))
                    << QStringLiteral("goods\x01%1").arg(goods.join(QChar(10)));
             QString reqData = params.join(QChar(2));
@@ -184,10 +227,6 @@ void BsPublisher::run()
                 QByteArray resp = netReply->readAll();
                 qDebug() << QString::fromUtf8(resp);
             }
-
-            //暂记
-            mLastShop = shop;
-            mLastSeconds = QDateTime::currentSecsSinceEpoch();
         }
 
         //logout

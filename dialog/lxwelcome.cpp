@@ -53,7 +53,7 @@ LxWelcome::LxWelcome() : QWidget(nullptr)
     mpLblImg->setPixmap(QPixmap(":/image/welcome.png"));
     mpLblImg->setAlignment(Qt::AlignCenter);
     mpLblImg->setFixedSize(640, 360);
-    mpLblImg->setStyleSheet(" QLabel {background:white;}");
+    mpLblImg->setStyleSheet(" QLabel {background:white;} ");
 
     //编译版本号
     mpBuildNum = new QLabel(this);

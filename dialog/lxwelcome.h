@@ -5,17 +5,10 @@
 #include <QtNetwork>
 
 #define LXAPP_VERSION_MAJOR     17
-#define LXAPP_VERSION_MINOR     1
-#define LXAPP_VERSION_PATCH     50
+#define LXAPP_VERSION_MINOR     2
+#define LXAPP_VERSION_PATCH     0
 /*
-48.ok查询结果打印行细线条以适用于针打
-48.ok查询结果筛选隐藏行不再打印出来。
-48.ok单据统计查询角度增加单据号、品名hpname（含库存）
-48.ok查询工具箱金额演算增加差额以计算毛利
-48.ok主窗口工具，批量审核工具（限总经理）
-50.ok登记窗口添加“新增”按钮。
-50.ok爱美无价功能
-50.ok总经理账号名可以更换的功能
+2.0.ok 爱美无价平台功能上线
 */
 
 

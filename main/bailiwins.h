@@ -324,6 +324,7 @@ private slots:
     void clickAmGeo();
     void clickToolAmUnGeo();
     void clickAmTag();
+    void clickToolAmUnTag();
 
 private:
     bool checkGetTags();
@@ -331,6 +332,7 @@ private:
     QAction*    mpAcAmGeo;
     QAction*    mpToolAmUnGeo;
     QAction*    mpAcAmTag;
+    QAction*    mpToolAmUnTag;
 
     QStringList mHttpTags;
 };
@@ -363,7 +365,7 @@ public:
     int          mCurrentSheetId;
 
 signals:
-    void shopStockChanged(const QString &shop);
+    void shopStockChanged(const QString &shop, const QString &relSheet, const int relId);
 
 protected:
     void closeEvent(QCloseEvent *e);
