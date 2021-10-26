@@ -4,7 +4,6 @@
 #include <QtWidgets>
 
 namespace BailiSoft {
-
 class BsQryWin;
 class BsQueryGrid;
 
@@ -12,7 +11,7 @@ class BsHistoryWin : public QWidget
 {
     Q_OBJECT
 public:
-    explicit BsHistoryWin(QWidget *parent, BsQryWin *qryWin, const QStringList &labelPairs, const QString &sql,
+    explicit BsHistoryWin(QMainWindow *parent, BsQryWin *qryWin, const QStringList &labelPairs, const QString &sql,
                           const QStringList &colTitles, const QString &sizerType = QString(),
                           const bool hasQcValue = false);
     ~BsHistoryWin(){}

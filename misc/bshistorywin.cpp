@@ -3,10 +3,11 @@
 #include "main/bailicode.h"
 #include "main/bailidata.h"
 #include "main/bailiwins.h"
+#include "main/bsmain.h"
 
 namespace BailiSoft {
 
-BsHistoryWin::BsHistoryWin(QWidget *parent, BsQryWin *qryWin, const QStringList &labelPairs, const QString &sql,
+BsHistoryWin::BsHistoryWin(QMainWindow *parent, BsQryWin *qryWin, const QStringList &labelPairs, const QString &sql,
                            const QStringList &colTitles, const QString &sizerType, const bool hasQcValue)
     : QWidget(parent)
 {
@@ -40,6 +41,11 @@ BsHistoryWin::BsHistoryWin(QWidget *parent, BsQryWin *qryWin, const QStringList 
 
     connect(btnPrint, SIGNAL(clicked(bool)), this, SLOT(doPrint()));
     connect(btnExport, SIGNAL(clicked(bool)), this, SLOT(doExport()));
+
+    BsMain *mainWin = qobject_cast<BsMain*>(parent);
+    if ( mainWin ) {
+        connect(mpGrid, SIGNAL(requestOpenSheet(QString,int)), mainWin, SLOT(responseOpenSheet(QString,int)));
+    }
 }
 
 void BsHistoryWin::closeEvent(QCloseEvent *e)

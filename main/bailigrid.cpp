@@ -839,7 +839,7 @@ int BsGrid::getColumnIndexByFieldName(const QString &fieldName)
 {
     for ( int i = 0, iLen = mCols.length(); i < iLen; ++i )
     {
-        if ( mCols.at(i)->mFldName == fieldName )
+        if ( mCols.at(i)->mFldName.toLower() == fieldName.toLower() )
         {
             return i;
         }
@@ -1639,6 +1639,24 @@ void BsQueryGrid::doPrint(const QString &title, const QStringList &conPairs,
     if (printDlg.exec() == QDialog::Accepted) {
         doc.print(&printer);  //DEBUG运行时报Invalid parameter passed to C runtime function.但一切正常
     }
+}
+
+void BsQueryGrid::mouseDoubleClickEvent(QMouseEvent *e)
+{
+    BsGrid::mouseDoubleClickEvent(e);
+
+    int row = currentRow();
+    if ( rowCount() < 1 || row < 0 ) {
+        return;
+    }
+
+    int sheetNameCol = getColumnIndexByFieldName(QStringLiteral("sheetname"));
+    int sheetIdCol = getColumnIndexByFieldName(QStringLiteral("sheetid"));
+    if ( sheetNameCol < 0 || sheetIdCol < 0 ) {
+        return;
+    }
+
+    emit requestOpenSheet(item(row, sheetNameCol)->text().toLower(), item(row, sheetIdCol)->text().toInt());
 }
 
 

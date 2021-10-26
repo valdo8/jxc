@@ -1006,6 +1006,24 @@ void BsMain::openHelpAbout()
     w->setGeometry((mpMdi->width() - w->width()) / 2, (mpMdi->height() - w->height()) / 2, w->width(), w->height());
 }
 
+void BsMain::responseOpenSheet(const QString &sheetName, const int sheetId)
+{
+    if ( ! checkRaiseSubWin(sheetName) ) {
+        addNewSubWin(new BsSheetCargoWin(this, sheetName, cargoSheetCommonFields));
+    }
+    QWidget *pwin = getTableWin(sheetName);
+    BsAbstractSheetWin *sheetWin = qobject_cast<BsAbstractSheetWin*>(pwin);
+    if ( sheetWin ) {
+
+        if ( sheetWin->isEditing() ) {
+            QMessageBox::information(this, QString(), QStringLiteral("单据编辑中，尚未保存或取消，不能打开单据。"));
+            return;
+        }
+
+        sheetWin->openSheet(sheetId);
+    }
+}
+
 int BsMain::getTotalMenuWidth()
 {
     int totalMenuWidth = 1;
@@ -1073,6 +1091,18 @@ void BsMain::closeAllSubWin()
             mpMdi->subWindowList().at(i)->close();
         }
     }
+}
+
+QWidget *BsMain::getTableWin(const QString &sheetName)
+{
+    for ( int i = 0, iLen = mpMdi->subWindowList().size(); i < iLen; ++i ) {
+        QMdiSubWindow *sw = mpMdi->subWindowList().at(i);
+        if ( mpMdi->subWindowList().at(i)->widget()->property(BSWIN_TABLE).toString() == sheetName ) {
+            sw->raise();
+            return mpMdi->subWindowList().at(i)->widget();
+        }
+    }
+    return nullptr;
 }
 
 bool BsMain::questionCloseAllSubWin()

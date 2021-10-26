@@ -1,5 +1,5 @@
 #include "bsabout.h"
-#include "lxwelcome.h"
+#include "main/bailicode.h"
 #include <QtWidgets>
 
 BsAbout::BsAbout(QWidget *parent) : QLabel(parent)
@@ -12,9 +12,9 @@ BsAbout::BsAbout(QWidget *parent) : QLabel(parent)
 
     mpBuildNum = new QLabel(this);
     mpBuildNum->setText(QStringLiteral("%1.%2.%3")
-                        .arg(LXAPP_VERSION_MAJOR)
-                        .arg(LXAPP_VERSION_MINOR)
-                        .arg(LXAPP_VERSION_PATCH));
+                        .arg(BailiSoft::lxapp_version_major)
+                        .arg(BailiSoft::lxapp_version_minor)
+                        .arg(BailiSoft::lxapp_version_patch));
     mpBuildNum->setStyleSheet("QLabel {color:white; }");
 
     setFixedSize(640, 360);

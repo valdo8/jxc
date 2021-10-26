@@ -4,14 +4,6 @@
 #include <QtWidgets>
 #include <QtNetwork>
 
-#define LXAPP_VERSION_MAJOR     17
-#define LXAPP_VERSION_MINOR     2
-#define LXAPP_VERSION_PATCH     0
-/*
-2.0.ok 爱美无价平台功能上线
-*/
-
-
 namespace BailiSoft {
 
 enum bsVersionReqType { bsverNum, bsVerDoc, bsverDown };

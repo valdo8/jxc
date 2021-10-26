@@ -1,4 +1,5 @@
 #include "lxwelcome.h"
+#include "main/bailicode.h"
 #include "main/bailifunc.h"
 
 #define STARTING_NOW            "程序加载中，请稍候……"
@@ -24,7 +25,7 @@ LxWelcome::LxWelcome() : QWidget(nullptr)
     mCanOver  = false;
     mNeedQuit = false;
     mCurrentReqType = bsverNum;
-    mNetMajorNum = LXAPP_VERSION_MAJOR;
+    mNetMajorNum = lxapp_version_major;
     mNetMinorNum = -1;
     mNetPatchNum = -1;
     mpFileDown = nullptr;
@@ -53,14 +54,14 @@ LxWelcome::LxWelcome() : QWidget(nullptr)
     mpLblImg->setPixmap(QPixmap(":/image/welcome.png"));
     mpLblImg->setAlignment(Qt::AlignCenter);
     mpLblImg->setFixedSize(640, 360);
-    mpLblImg->setStyleSheet(" QLabel {background:white;} ");
+    mpLblImg->setStyleSheet(" QLabel {background:white;}");
 
     //编译版本号
     mpBuildNum = new QLabel(this);
     mpBuildNum->setText(QStringLiteral("%1.%2.%3")
-                        .arg(LXAPP_VERSION_MAJOR)
-                        .arg(LXAPP_VERSION_MINOR)
-                        .arg(LXAPP_VERSION_PATCH));
+                        .arg(lxapp_version_major)
+                        .arg(lxapp_version_minor)
+                        .arg(lxapp_version_patch));
     mpBuildNum->setStyleSheet("QLabel {color:#ffffff;}");
 
     //进度等待条
@@ -128,7 +129,7 @@ void LxWelcome::doNetCheckStart()
     mpProgress->setMaximum(0);
 
     mUsingUrl = mNetVerFile;
-    mNetMajorNum = LXAPP_VERSION_MAJOR;
+    mNetMajorNum = lxapp_version_major;
     mNetMinorNum = -1;
     mNetPatchNum = -1;
     mpFileDown = nullptr;
@@ -143,7 +144,7 @@ void LxWelcome::doClickLeft()
     mpBtnLeft->hide();
 
     //网络后通会到此
-    if ( mNetMajorNum == LXAPP_VERSION_MAJOR && mNetMinorNum < 0 && mNetPatchNum < 0 ) {
+    if ( mNetMajorNum == lxapp_version_major && mNetMinorNum < 0 && mNetPatchNum < 0 ) {
         mpProgress->showMessage(QStringLiteral(RETRY_NET_WAITING), true);        
         mpBtnRight->hide();
         doNetCheckStart();
@@ -160,7 +161,7 @@ void LxWelcome::doClickLeft()
 
 void LxWelcome::doClickRight()
 {
-    if ( mNetMajorNum == LXAPP_VERSION_MAJOR && mNetMinorNum >= 0 && mNetPatchNum >= 0
+    if ( mNetMajorNum == lxapp_version_major && mNetMinorNum >= 0 && mNetPatchNum >= 0
          && mpFileDown && mpFileDown->isOpen() ) {
         execUpgradeDownAbort();
     } else {
@@ -328,7 +329,7 @@ void LxWelcome::execCheckVersionSuccess()
         mNetMinorNum = QString(numPair.at(1)).toInt();
         mNetPatchNum = QString(numPair.at(2)).toInt();
     } else {
-        mNetMajorNum = LXAPP_VERSION_MAJOR;
+        mNetMajorNum = lxapp_version_major;
         mNetMinorNum = 999;
         mNetPatchNum = 999;
     }
@@ -436,8 +437,8 @@ void LxWelcome::execUpgradeDownFail(const QString &prErr)
 
 bool LxWelcome::needUpgradeNow()
 {
-    return ( mNetMajorNum == LXAPP_VERSION_MAJOR ) && ( mNetMinorNum > LXAPP_VERSION_MINOR ||
-             (mNetMinorNum == LXAPP_VERSION_MINOR && mNetPatchNum > LXAPP_VERSION_PATCH) );
+    return ( mNetMajorNum == lxapp_version_major ) && ( mNetMinorNum > lxapp_version_minor ||
+             (mNetMinorNum == lxapp_version_minor && mNetPatchNum > lxapp_version_patch) );
 }
 
 ////////////////////////////////////////////////////////////////////////

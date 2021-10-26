@@ -95,11 +95,14 @@ private slots:
     void openHelpSite();
     void openHelpAbout();
 
+    void responseOpenSheet(const QString &sheetName, const int sheetId);
+
 private:
     int  getTotalMenuWidth();
     bool checkRaiseSubWin(const QString &winTable);
     void addNewSubWin(QWidget *win, const bool setCenterr = false);
     void closeAllSubWin();
+    QWidget*  getTableWin(const QString &sheetName);
     bool questionCloseAllSubWin();
     void openQryAlarm(const bool isMinType);
     void setMenuAllowable();

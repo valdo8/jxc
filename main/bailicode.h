@@ -19,6 +19,11 @@ const QString BSR17WinSize           = QLatin1String("BSR17WinSize");
 const QString BSR17OptionBox         = QLatin1String("BSR17OptionBox");
 const QString BSR17ColumnWidth       = QLatin1String("BSR17ColumnWidth");
 
+//版本号
+extern int lxapp_version_major;
+extern int lxapp_version_minor;
+extern int lxapp_version_patch;
+
 //表基名（英）
 extern QStringList    lstRegisWinTableNames;
 extern QStringList    lstSheetWinTableNames;

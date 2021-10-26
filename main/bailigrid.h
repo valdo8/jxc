@@ -312,6 +312,10 @@ public:
     explicit BsQueryGrid(QWidget *parent);
     void doPrint(const QString &title, const QStringList &conPairs,
                  const QString &printMan, const QString &printTime);
+signals:
+    void requestOpenSheet(const QString &sheetName, const int sheetId);
+protected:
+    void mouseDoubleClickEvent(QMouseEvent *e);
 };
 
 

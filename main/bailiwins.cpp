@@ -3883,7 +3883,6 @@ void BsAbstractSheetWin::doCheck()
         mpSttValChkTime->setText(QDateTime::fromMSecsSinceEpoch(1000 * chktime).toString("yyyy-MM-dd hh:mm:ss"));
         doSyncFindGrid();
         emit shopStockChanged(mpShop->mpEditor->getDataValue(), mMainTable, mCurrentSheetId);
-        QMessageBox::information(this, QString(), mapMsg.value("i_check_sheet_success"));
     }
 }
 

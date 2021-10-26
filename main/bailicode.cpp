@@ -6,6 +6,16 @@
 
 namespace BailiSoft {
 
+//版本号
+int lxapp_version_major = 17;
+int lxapp_version_minor = 2;
+int lxapp_version_patch = 1;
+/*
+2.0.ok 爱美无价平台功能上线
+2.1.ok 双击对账核对清单直接打开对应单据
+2.1.ok 取消审核成功后的对话框重复提示。
+*/
+
 //表基名（英）
 QStringList              lstRegisWinTableNames;
 QStringList              lstSheetWinTableNames;
@@ -782,7 +792,6 @@ void initMapMsg()
     mapMsg.insert("i_check_sheet_confirm", QStringLiteral("您确定要审核本单吗？"));
     mapMsg.insert("i_check_sheet_failed", QStringLiteral("审核不成功，请稍后重试。"));
     mapMsg.insert("i_uncheck_sheet_failed", QStringLiteral("撤审不成功，请稍后重试。"));
-    mapMsg.insert("i_check_sheet_success", QStringLiteral("审核本单成功！"));
     mapMsg.insert("i_uncheck_sheet_success", QStringLiteral("撤审成功！"));
     mapMsg.insert("i_window_in_editing", QStringLiteral("窗口处于编辑状态，请“保存”或“取消”后关闭。"));
     mapMsg.insert("i_found_editing_win", QStringLiteral("有打开的窗口处于未保存编辑态，请先保存或取消。"));
