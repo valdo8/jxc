@@ -9,11 +9,12 @@ namespace BailiSoft {
 //版本号
 int lxapp_version_major = 17;
 int lxapp_version_minor = 2;
-int lxapp_version_patch = 1;
+int lxapp_version_patch = 2;
 /*
 2.0.ok 爱美无价平台功能上线
 2.1.ok 双击对账核对清单直接打开对应单据
 2.1.ok 取消审核成功后的对话框重复提示。
+2.2.ok 标签条形码文字居中
 */
 
 //表基名（英）

@@ -83,8 +83,8 @@ QPixmap BarLabel::generatePixmap(const QString &text, const int width, const int
     //文字
     if ( textVisible )
     {
-        QRect tr = QRect(0, barHeight , width, txtHeight);
-        painter.drawText(tr, text, Qt::AlignHCenter | Qt::AlignVCenter);
+        const QRect tr = QRect(0, barHeight , left, txtHeight);  //barcode actual width
+        painter.drawText(tr, Qt::AlignCenter, text);
     }
 
     //超出提示
@@ -93,7 +93,7 @@ QPixmap BarLabel::generatePixmap(const QString &text, const int width, const int
         int tw = painter.fontMetrics().horizontalAdvance(tip);
         QRect tr = QRect(width - tw, (barHeight - txtHeight) / 2, tw, txtHeight);
         painter.fillRect(tr, Qt::white);
-        painter.drawText(tr, tip, Qt::AlignRight | Qt::AlignVCenter);
+        painter.drawText(tr, Qt::AlignRight | Qt::AlignVCenter, tip);
     }
 
     //返回

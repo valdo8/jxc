@@ -45,6 +45,7 @@ private slots:
     void overDestroy();
     void fetchColorName();
     void dealLeftAsSameStyle();
+    void dealAllAsSameStyle();
     void gridDoubleClicked(QTableWidgetItem *item);
 
 private:
@@ -63,11 +64,13 @@ private:
     QString importStaff(QSqlDatabase &mdb, QSqlDatabase &newdb);
     QString importBaseRef(const QString &newTable, QSqlDatabase &mdb, QSqlDatabase &newdb);
     QString importSheet(const QString &oldSheet, const QString &newSheet, QSqlDatabase &mdb, QSqlDatabase &newdb);
+    QString importStock(const int newSheetId, const QString &shop, QSqlDatabase &mdb, QSqlDatabase &newdb);
     QString updateSheetSum(const QString &sheet, QSqlDatabase &newdb);
     QString saveDebugTestData(QSqlDatabase &newdb);
 
     QString getOldSizeColSel(const QString &prefix = QString());
     QString getOldSizeColSum(const QString &prefix = QString());
+    QString getOldSizeColHaving(const QString &prefix = QString());
     QString batchExec(const QStringList &sqls, QSqlDatabase &newdb);
 
 
@@ -81,6 +84,7 @@ private:
     QPushButton*    mpBtnFetchColorName;
     QPushButton*    mpBtnR16ExpRestore;
     QPushButton*    mpBtnR16ExpApply;
+    QCheckBox*      mpChkOnlyStock;
 
     QString         mAccessFile;
     QString         mAccessConn;

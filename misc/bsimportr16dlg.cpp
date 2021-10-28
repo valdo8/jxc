@@ -71,7 +71,7 @@ BsImportR16Dlg::BsImportR16Dlg(QWidget *parent, const QString &accessFile)
 
     mpEdtSql = new QTextEdit(this);
 
-    mpBtnSql = new QPushButton(QStringLiteral("execute for ready"), this);
+    mpBtnSql = new QPushButton(QStringLiteral("  execute for ready  "), this);
     connect(mpBtnSql, &QPushButton::clicked, this, &BsImportR16Dlg::clickSqlExecute);
 
     QLabel* lblR16Exp = new QLabel(QStringLiteral("从货号提取款号与色号的正则表达式："), this);
@@ -115,8 +115,20 @@ BsImportR16Dlg::BsImportR16Dlg(QWidget *parent, const QString &accessFile)
     QLabel* lblR16HelpCap = new QLabel(QStringLiteral(REGEXP_CAP_HELP), this);
     lblR16HelpCap->setWordWrap(true);
 
-    QPushButton *btnDealAsSame = new QPushButton(QStringLiteral("  余下货号款色不分  "), this);
-    connect(btnDealAsSame, &QPushButton::clicked, this, &BsImportR16Dlg::dealLeftAsSameStyle);
+    QPushButton *btnDealLeftSame = new QPushButton(QStringLiteral("余下货号款色不分"), this);
+    connect(btnDealLeftSame, &QPushButton::clicked, this, &BsImportR16Dlg::dealLeftAsSameStyle);
+
+    QPushButton *btnDealAllSame = new QPushButton(QStringLiteral("所有货号款色不分"), this);
+    connect(btnDealAllSame, &QPushButton::clicked, this, &BsImportR16Dlg::dealAllAsSameStyle);
+
+    QWidget* pnlDealSame = new QWidget(this);
+    QHBoxLayout *layDealSame = new QHBoxLayout(pnlDealSame);
+    layDealSame->addStretch();
+    layDealSame->addWidget(btnDealLeftSame);
+    layDealSame->addWidget(btnDealAllSame);
+    layDealSame->addStretch();
+
+    mpChkOnlyStock = new QCheckBox(QStringLiteral("仅导库存"), this);
 
     QPushButton* btnR16Next = new QPushButton(QStringLiteral("执行导入"), this);
     btnR16Next->setIcon(QIcon(":/icon/go.png"));
@@ -132,6 +144,7 @@ BsImportR16Dlg::BsImportR16Dlg(QWidget *parent, const QString &accessFile)
     QWidget* pnlR16StepButtons = new QWidget(this);
     QHBoxLayout* layR16StepButtons = new QHBoxLayout(pnlR16StepButtons);
     layR16StepButtons->addStretch();
+    layR16StepButtons->addWidget(mpChkOnlyStock);
     layR16StepButtons->addWidget(btnR16Next);
     layR16StepButtons->addWidget(btnR16Cancel);
     layR16StepButtons->addStretch();
@@ -146,7 +159,7 @@ BsImportR16Dlg::BsImportR16Dlg(QWidget *parent, const QString &accessFile)
     layR16Cap->addWidget(pnlR16ExpButtons);
     layR16Cap->addWidget(mpLblR16ExpHelp);
     layR16Cap->addWidget(lblR16HelpCap);
-    layR16Cap->addWidget(btnDealAsSame, 0, Qt::AlignCenter);
+    layR16Cap->addWidget(pnlDealSame);
     layR16Cap->addStretch(1);
     layR16Cap->addWidget(pnlR16StepButtons);
 
@@ -408,6 +421,25 @@ void BsImportR16Dlg::dealLeftAsSameStyle()
     }
 }
 
+void BsImportR16Dlg::dealAllAsSameStyle()
+{
+    for ( int i = 0, iLen = grdR16Cargo->rowCount(); i < iLen; ++i ) {
+        QString cargo = grdR16Cargo->item(i, 0)->text();
+        QTableWidgetItem* itAttr1 = grdR16Cargo->item(i, 1);
+
+        grdR16Cargo->item(i, 0)->setData(Qt::UserRole + UIDX_DIRTY, false);
+
+        itAttr1->setText(cargo);
+        itAttr1->setData(Qt::UserRole, cargo);
+        itAttr1->setForeground(QBrush(Qt::black));
+
+        QTableWidgetItem* itAttr2 = grdR16Cargo->item(i, 2);
+        itAttr2->setText(COLOR_BIND_FLAG);
+        itAttr2->setData(Qt::UserRole,  itAttr2->text());
+        itAttr2->setForeground(QBrush(Qt::black));
+    }
+}
+
 void BsImportR16Dlg::gridDoubleClicked(QTableWidgetItem *item)
 {
     if ( item && item->column() == 0 ) {
@@ -622,14 +654,32 @@ QString BsImportR16Dlg::importTableByTable(QSqlDatabase &mdb, QSqlDatabase &newd
     if ( strErr.isEmpty() )
         strErr = importBaseRef("customer", mdb, newdb);
 
-    if ( strErr.isEmpty() )
-        strErr = importSheet("DBD", "dbd", mdb, newdb);
+    if ( mpChkOnlyStock->isChecked() ) {
+        QString sql = "select stock, sum(qty) from qUKCbyDB group by stock having sum(qty)>0 order by stock;";
+        QSqlQuery mqry(mdb);
+        mqry.exec(sql);
+        if ( mqry.lastError().isValid() ) return mqry.lastError().text() + "\n" + mqry.lastQuery();
+        QStringList stocks;
+        while ( mqry.next() ) { stocks << mqry.value(0).toString(); }
+        mqry.finish();
 
-    if ( strErr.isEmpty() )
-        strErr = importSheet("JHD", "cgj", mdb, newdb);
+        int newSheetId = 0;
+        for ( int i = 0, iLen = stocks.length(); i < iLen; ++i ) {
+            if ( strErr.isEmpty() ) {
+                strErr = importStock(++newSheetId, stocks.at(i), mdb, newdb);
+            }
+        }
+    }
+    else {
+        if ( strErr.isEmpty() )
+            strErr = importSheet("DBD", "dbd", mdb, newdb);
 
-    if ( strErr.isEmpty() )
-        strErr = importSheet("XSD", "lsd", mdb, newdb);
+        if ( strErr.isEmpty() )
+            strErr = importSheet("JHD", "cgj", mdb, newdb);
+
+        if ( strErr.isEmpty() )
+            strErr = importSheet("XSD", "lsd", mdb, newdb);
+    }
 
     //刷新主表合计
     if ( strErr.isEmpty() )
@@ -640,6 +690,9 @@ QString BsImportR16Dlg::importTableByTable(QSqlDatabase &mdb, QSqlDatabase &newd
 
     if ( strErr.isEmpty() )
         strErr = updateSheetSum("lsd", newdb);
+
+    if ( strErr.isEmpty() )
+        strErr = updateSheetSum("syd", newdb);
 
     //return
     return strErr;
@@ -958,6 +1011,107 @@ QString BsImportR16Dlg::importSheet(const QString &oldSheet, const QString &newS
     return batchExec(sqls, newdb);
 }
 
+QString BsImportR16Dlg::importStock(const int newSheetId, const QString &shop, QSqlDatabase &mdb, QSqlDatabase &newdb)
+{
+    QStringList sqls;
+    QSqlQuery mqry(mdb);
+    QString oldSizeCols = getOldSizeColSum(QStringLiteral("qUKCbyDB."));
+    QString oldSizeHaving = getOldSizeColHaving(QStringLiteral("qUKCbyDB."));
+
+    //主表
+    QDate dt = QDate::currentDate();
+    QString sql = QStringLiteral("insert into syd(sheetID, proof, dateD, shop, trader, stype, staff, remark, "
+                                 "checker, chktime, upMan, upTime) "
+                                 "values(%1, '升级期初', %2, '%3', '%3', '升级期初', '', '', '管理员', %2, '管理员', %2);")
+            .arg(newSheetId)
+            .arg(QDateTime(dt).toSecsSinceEpoch())
+            .arg(shop);
+    sqls << sql;
+
+    //细表
+    sql = QStringLiteral("select cargo, sum(qty), %1 from qUKCbyDB where stock='%2' "
+                         "group by cargo HAVING %3;").arg(oldSizeCols).arg(shop).arg(oldSizeHaving);
+    mqry.exec(sql);
+    if ( mqry.lastError().isValid() ) return mqry.lastError().text() + "\n" + mqry.lastQuery();
+
+    //R16行遍历
+    qint64 rowTime = QDateTime::currentMSecsSinceEpoch();
+    while ( mqry.next() ) {
+        QString r16cargo = mqry.value(0).toString().toUpper();
+        int actQty = mqry.value(1).toInt();
+        rowTime += 10;
+
+        QString r17cargo = r16cargo;
+        QString r17color = r16cargo;
+        QStringList useSizeCols;
+        int gridRow = ( mapGridRow.contains(r16cargo) ) ? mapGridRow.value(r16cargo) : -1;
+        if ( gridRow >= 0 ) {   //R16有登记
+            r17cargo = grdR16Cargo->item(gridRow, 1)->text();
+            r17color = grdR16Cargo->item(gridRow, 2)->text();
+            QString sizeTypeName = grdR16Cargo->item(gridRow, 0)->data(Qt::UserRole + UIDX_SIZETYPE).toString();
+            useSizeCols = mapSizeType.value(sizeTypeName);
+        } else {                //R16无登记
+            r17cargo = r16cargo;
+            r17color = QString();
+            QString sizeTypeName = grdR16Cargo->item(0, 0)->data(Qt::UserRole + UIDX_SIZETYPE).toString();
+            useSizeCols = mapSizeType.value(sizeTypeName);
+        }
+
+        //因为R16缺陷，有的qty列与各SZ列之和并不相等，故重求
+        int sumQty = 0;
+        for ( int i = 1, iLen = useSizeCols.length(); i <= iLen; ++i ) {
+            sumQty += mqry.value(1 + i).toInt();
+        }
+        bool bugRow = (sumQty != actQty);
+
+        //尺码遍历求sizers
+        QStringList sizers;
+        for ( int i = 1, iLen = useSizeCols.length(); i <= iLen; ++i ) {
+
+            int qty = mqry.value(1 + i).toInt();
+
+            if ( qty != 0 ) {
+
+                //求和BUG行处理
+                if ( bugRow ) {
+
+                    //以合计行为准（现在就退出）
+                    if ( actQty == 0 )
+                        break;
+
+                    //只将总数放一个尺码，后面break退出for循环，不再处理其它尺码
+                    if ( actQty != 0 ) {
+                        qty = actQty;
+                    }
+                }
+
+                QString sizer = useSizeCols.at(i - 1);
+                sizers << QStringLiteral("%1\t%2").arg(sizer).arg(qty * 10000);
+
+                //已经全放一个尺码了
+                if ( bugRow && actQty != 0 )
+                    break;
+            }
+        }
+
+        //SQL
+        QString sql = QStringLiteral("insert into syddtl"
+                                     "(parentid, rowtime, cargo, color, sizers, price, qty, discount, actMoney, disMoney) "
+                                     "values(%1, %2, '%3', '%4', '%5', 0, %6, 0, 0, 0);")
+                .arg(newSheetId)
+                .arg(rowTime)
+                .arg(r17cargo)
+                .arg(r17color)
+                .arg(sizers.join(QChar(10)))
+                .arg(actQty * 10000);
+
+        sqls << sql;
+
+    }
+
+    return batchExec(sqls, newdb);
+}
+
 QString BsImportR16Dlg::updateSheetSum(const QString &sheet, QSqlDatabase &newdb)
 {
     QStringList sqls;
@@ -1015,6 +1169,15 @@ QString BsImportR16Dlg::getOldSizeColSum(const QString &prefix)
     return sl.join(QChar(44));
 }
 
+QString BsImportR16Dlg::getOldSizeColHaving(const QString &prefix)
+{
+    QStringList sl;
+    for ( int i = 1, iLen = mOldSizeColCount; i <= iLen; ++i ) {
+        sl << QStringLiteral("SUM(%1SZ%2)<>0").arg(prefix).arg(i, 2, 10, QLatin1Char('0'));
+    }
+    return sl.join(QStringLiteral(" OR "));
+}
+
 QString BsImportR16Dlg::batchExec(const QStringList &sqls, QSqlDatabase &newdb)
 {
     QString sql;
@@ -1032,7 +1195,7 @@ QString BsImportR16Dlg::batchExec(const QStringList &sqls, QSqlDatabase &newdb)
     }
     newdb.commit();
 
-    return "";
+    return QString();
 }
 
 }
