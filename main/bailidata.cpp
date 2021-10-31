@@ -687,6 +687,7 @@ void copyDemoBook(){
 //仅用于测试驱动环境
 int openDefaultSqliteConn() {
     QSqlDatabase db = QSqlDatabase::addDatabase("QSQLITE");
+    db.setConnectOptions("QSQLITE_ENABLE_REGEXP");
     if ( db.isValid() ) {
         db.setDatabaseName(":memory:");
         db.open();

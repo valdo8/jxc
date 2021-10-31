@@ -355,7 +355,7 @@ QStringList createCargoRelTableSql(const bool forImport)
                         "    uptime		integer default 0"
                         ");");
 
-    ls << QLatin1String("create table if not exists lotPolicy("     //名为lot，但也包含ret。系统不设计进货于调拨价格政策。
+    ls << QLatin1String("create table if not exists lotPolicy("     //名为lot，但也包含ret。系统不设计进货与调拨价格政策。
                         "    policyName		text primary key,"
                         "    traderExp		text default '',"
                         "    cargoExp		text default '',"

@@ -1064,13 +1064,13 @@ QString BsImportR15Dlg::importSheet(const QString &oldSheet, const QString &newS
                               "values(%2, '%3', %4, '%5', '%6', '%7', '%8', '%9', '%10', %11, '%12', %13);")
                 .arg(newSheet)
                 .arg(mqry.value(0).toInt())
-                .arg(mqry.value(1).toString().replace(QChar(39), QStringLiteral("''")))
+                .arg(mqry.value(1).toString().replace(QChar(39), QChar(8217)))
                 .arg(QDateTime(dateD).toMSecsSinceEpoch() / 1000)
                 .arg(mqry.value(3).toString())
                 .arg(mqry.value(4).toString())
                 .arg(mqry.value(5).toString())
                 .arg(mqry.value(6).toString())
-                .arg(mqry.value(7).toString().replace(QChar(39), QStringLiteral("''")))
+                .arg(mqry.value(7).toString().replace(QChar(39), QChar(8217)))
                 .arg(mqry.value(9).toString())
                 .arg(chktime)
                 .arg(mqry.value(10).toString())
@@ -1095,7 +1095,7 @@ QString BsImportR15Dlg::importSheet(const QString &oldSheet, const QString &newS
         double actPrice = mqry.value(3).toDouble();
         int actQty = mqry.value(4).toInt();
         double actMoney = mqry.value(5).toDouble();
-        QString rowMark = mqry.value(6).toString().replace(QChar(39), QStringLiteral("''"));
+        QString rowMark = mqry.value(6).toString().replace(QChar(39), QChar(8217));
         double setprice = (mapSetPrice.contains(cargo)) ? mapSetPrice.value(cargo) : 1000.0;
         double discount = actPrice / setprice;
         double disMoney = (1-discount) * (setprice * actQty);

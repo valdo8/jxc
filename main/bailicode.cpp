@@ -9,12 +9,14 @@ namespace BailiSoft {
 //版本号
 int lxapp_version_major = 17;
 int lxapp_version_minor = 2;
-int lxapp_version_patch = 2;
+int lxapp_version_patch = 3;
 /*
+... 帮助文档————登记推荐实践零售与批发、本店与代销
 2.0.ok 爱美无价平台功能上线
 2.1.ok 双击对账核对清单直接打开对应单据
 2.1.ok 取消审核成功后的对话框重复提示。
 2.2.ok 标签条形码文字居中
+2.3.ok 工具箱自动划价功能
 */
 
 //表基名（英）
@@ -628,6 +630,7 @@ void initMapMsg()
     mapMsg.insert("tool_lotmoney_calc", QStringLiteral("批发价金额演算"));
     mapMsg.insert("tool_buymoney_calc", QStringLiteral("进货价金额演算"));
     mapMsg.insert("tool_import_batch_barcodes", QStringLiteral("批量导入条形码"));
+    mapMsg.insert("tool_auto_batch_reprice", QStringLiteral("重新整单划价"));
     mapMsg.insert("tool_print_cargo_labels", QStringLiteral("打印吊牌标签"));
     mapMsg.insert("tool_copy_import_sheet", QStringLiteral("复制导入单据"));
     mapMsg.insert("tool_alarm_setting", QStringLiteral("设置库存警报"));

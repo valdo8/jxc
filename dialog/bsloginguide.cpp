@@ -543,9 +543,9 @@ QString BsLoginGuide::loadUserInfo()
     if ( ! qry.lastError().isValid() ) {
         while ( qry.next() ) {
             QString loginerTxt = qry.value(0).toString();
-            loginerTxt.replace(QChar(39), QString());
+            loginerTxt.replace(QChar(39), QChar(8217));
             QString shopTxt = qry.value(2).toString();
-            shopTxt.replace(QChar(39), QString());
+            shopTxt.replace(QChar(39), QChar(8217));
             //data存储“password \n bindshop”
             mpUsers->addItem(loginerTxt, QString("%1\n%2").arg(qry.value(1).toString()).arg(shopTxt));
         }
