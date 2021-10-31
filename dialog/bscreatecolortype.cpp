@@ -124,7 +124,7 @@ void BsCreateColorTypeDlg::onClickNew()
 {
     QStringList sqls;
     QString txt = mpEdtNew->text();
-    txt.replace(QStringLiteral("，"), QStringLiteral(",")).replace(QChar(39), QString());
+    txt.replace(QStringLiteral("，"), QStringLiteral(",")).replace(QChar(39), QChar(8217));
     QStringList txts = txt.split(QChar(','));
 
     for ( int i = 0, iLen = txts.length(); i < iLen; ++i ) {

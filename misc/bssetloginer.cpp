@@ -258,11 +258,11 @@ void BsSetLoginer::addLoginer()
     QString deskPass = dlg.getDeskPass();
     QString netCode = dlg.getNetCode();
 
-    loginer.replace(QChar(39), QString());
-    bindShop.replace(QChar(39), QString());
-    bindCustomer.replace(QChar(39), QString());
-    deskPass.replace(QChar(39), QString());
-    netCode.replace(QChar(39), QString());
+    loginer.replace(QChar(39), QChar(8217));
+    bindShop.replace(QChar(39), QChar(8217));
+    bindCustomer.replace(QChar(39), QChar(8217));
+    deskPass.replace(QChar(39), QChar(8217));
+    netCode.replace(QChar(39), QChar(8217));
 
     QSqlQuery qry;
     QString sql = QStringLiteral("insert into baililoginer(loginer, bindShop, bindCustomer, deskPassword, passHash) "
@@ -332,8 +332,8 @@ void BsSetLoginer::resetPassword()
 
         QString deskPass = dlg.getDeskPass();
         QString netCode = dlg.getNetCode();
-        deskPass.replace(QChar(39), QString());
-        netCode.replace(QChar(39), QString());
+        deskPass.replace(QChar(39), QChar(8217));
+        netCode.replace(QChar(39), QChar(8217));
 
         QSqlQuery qry;
         QString sql = QStringLiteral("update baililoginer set deskPassword='%1', passhash='%2' where loginer='%3';")
@@ -376,7 +376,7 @@ void BsSetLoginer::saveChange()
     setExps << QStringLiteral("retprice=%1").arg((mpRetPrice->isChecked()) ? -1 : 0);
     setExps << QStringLiteral("lotprice=%1").arg((mpLotPrice->isChecked()) ? -1 : 0);
     setExps << QStringLiteral("buyprice=%1").arg((mpBuyPrice->isChecked()) ? -1 : 0);
-    setExps << QStringLiteral("limcargoexp='%1'").arg(mpLimCargoExp->text().replace(QChar(39), QString()));
+    setExps << QStringLiteral("limcargoexp='%1'").arg(mpLimCargoExp->text().replace(QChar(39), QChar(8217)));
 
     for ( int i = 0, iLen = lstRegisWinTableNames.length(); i < iLen; ++i ) {
         QModelIndex dataIdx = mpModelRegis->index(i, 0);

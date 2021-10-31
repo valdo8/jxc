@@ -57,6 +57,7 @@ private:
     QString reqQryStock(const QString &packstr, const BsFronter *user);
     QString reqQryView(const QString &packstr, const BsFronter *user);
     QString reqQryObject(const QString &packstr, const BsFronter *user);
+    QString reqQryNewPush(const QString &packstr, const BsFronter *user);
     QString reqQryImage(const QString &packstr, const BsFronter *user);
     QString reqQryPrintOwe(const QString &packstr, const BsFronter *user);
     QString reqMessage(const QString &packstr, const BsFronter *user, const QString &toName, qint64 *msgIdPtr);

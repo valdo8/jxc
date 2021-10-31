@@ -487,6 +487,7 @@ private slots:
     void sumMoneyChanged(const QString &sumValue);
     void actPayChanged();
     void taberIndexChanged(int index);
+    void doToolAutoRePrice();
     void doToolDefineFieldName();
     void doToolImportBatchBarcodes();
     void doToolPrintCargoLabels();
@@ -530,6 +531,7 @@ private:
     QCheckBox*                  mpPickTrader;
 
     QAction*    mpAcToolDefineName;
+    QAction*    mpAcToolAutoRePrice;
     QAction*    mpAcToolImportBatchBarcodes;
     QAction*    mpAcToolPrintCargoLabels;
 

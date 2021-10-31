@@ -472,7 +472,7 @@ void LxSalesManage::makeHard()
         if ( qry.lastError().isValid() ) qDebug() << qry.lastError().text() << "\n" << sql;
         int newSheetId = (qry.next()) ? (qry.value(0).toInt() + 1) : 1;
 
-        QString trader = mpUserName->text().replace(QChar(39), QString());
+        QString trader = mpUserName->text().replace(QChar(39), QChar(8217));
 
         QStringList hards;
         QSetIterator<QString> sit(mMadeHardIds);
@@ -637,7 +637,7 @@ void LxSalesManage::makeSoft()
     if ( qry.lastError().isValid() ) qDebug() << qry.lastError().text() << "\n" << sql;
     int newSheetId = (qry.next()) ? (qry.value(0).toInt() + 1) : 1;
 
-    QString trader = mpUserName->text().replace(QChar(39), QString());
+    QString trader = mpUserName->text().replace(QChar(39), QChar(8217));
 
     qint64 qty = mpBuyQty->text().toInt() * 10000;
     qint64 mny = qty * 980;

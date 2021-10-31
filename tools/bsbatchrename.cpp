@@ -96,8 +96,8 @@ void BsBatchRename::doExec()
 
     QString strOld = mpEdtOld->text();
     QString strNew = mpEdtNew->text();
-    strOld.replace(QChar(39), QString());
-    strNew.replace(QChar(39), QString());
+    strOld.replace(QChar(39), QChar(8217));
+    strNew.replace(QChar(39), QChar(8217));
 
     switch (mpRegTable->currentIndex()) {
     //customer

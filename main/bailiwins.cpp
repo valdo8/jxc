@@ -23,6 +23,7 @@
 #include "dialog/bscreatecolortype.h"
 #include "dialog/bsshoplocdlg.h"
 #include "dialog/bstagselectdlg.h"
+#include "dialog/bspricebatch.h"
 #include <iostream>
 #include <QNetworkRequest>
 #include <QNetworkReply>
@@ -4363,6 +4364,11 @@ BsSheetCargoWin::BsSheetCargoWin(QWidget *parent, const QString &name, const QSt
     mpAcToolDefineName->setProperty(BSACRIGHT, loginAsAdminOrBoss);
     mpMenuToolCase->insertAction(mpToolPrintSetting, mpAcToolDefineName);
 
+    mpAcToolAutoRePrice = mpMenuToolCase->addAction(QIcon(), mapMsg.value("tool_auto_batch_reprice"),
+                                                            this, SLOT(doToolAutoRePrice()));
+    mpAcToolAutoRePrice->setProperty(BSACFLAGS, bsacfDirty);
+    mpAcToolAutoRePrice->setProperty(BSACRIGHT, canDo(mRightWinName, bsrsNew) || canDo(mRightWinName, bsrsUpd));
+
     mpAcToolImportBatchBarcodes = mpMenuToolCase->addAction(QIcon(), mapMsg.value("tool_import_batch_barcodes"),
                                                             this, SLOT(doToolImportBatchBarcodes()));
     mpAcToolImportBatchBarcodes->setProperty(BSACFLAGS, bsacfDirty);
@@ -4903,6 +4909,43 @@ void BsSheetCargoWin::taberIndexChanged(int index)
     }
     if ( index == 1 ) {
         mpSpl->setSizes(QList<int>() << height() / 2 << height() / 3);
+    }
+}
+
+void BsSheetCargoWin::doToolAutoRePrice()
+{
+    QString sheetPrice;
+    if ( mMainTable.startsWith(QStringLiteral("cg")) )
+        sheetPrice = QStringLiteral("进货价");
+    else if ( mMainTable.startsWith(QStringLiteral("pf")) || mMainTable == QStringLiteral("dbd") )
+        sheetPrice = QStringLiteral("批发价");
+    else if ( mMainTable.startsWith(QStringLiteral("ls")) )
+        sheetPrice = QStringLiteral("零售价");
+    else
+        sheetPrice = QStringLiteral("标牌价");
+
+    QString trader = mpTrader->mpEditor->getDataValue();
+    if ( trader.isEmpty() ) {
+        QMessageBox::information(this, QString(), QStringLiteral("未指定%1").arg(mpTrader->mpLabel->text()));
+        return;
+    }
+
+    double regDis = getTraderDisByName(trader);
+
+    BsPriceBatchDlg dlg(this, sheetPrice, trader, regDis);
+    if ( dlg.exec() == QDialog::Accepted ) {
+
+        QString usePrice = dlg.getPriceType();
+
+        bool rightDenyy = (!canBuyy && usePrice == QStringLiteral("buyprice")) ||
+                (!canLott && usePrice == QStringLiteral("lotprice")) ||
+                (!canRett && usePrice == QStringLiteral("retprice"));
+        if ( rightDenyy ) {
+            QMessageBox::information(this, QString(), QStringLiteral("无此价格权限！"));
+            return;
+        }
+
+        mpSheetCargoGrid->autoBatchPrice(usePrice);
     }
 }
 

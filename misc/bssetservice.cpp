@@ -356,6 +356,7 @@ void BsSetService::qryLog()
                                  "  when 9 then '查一览' "
                                  "  when 10 then '查登记' "
                                  "  when 11 then '查图' "
+                                 "  when 12 then '查新' "
                                  "  else '未知' end) as rtype, "
                                  "reqinfo from serverlog %1;").arg(where);
     QSqlQuery qry;

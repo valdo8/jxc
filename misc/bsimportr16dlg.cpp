@@ -904,7 +904,7 @@ QString BsImportR16Dlg::importSheet(const QString &oldSheet, const QString &newS
                 .arg(mqry.value(4).toString())
                 .arg(mqry.value(5).toString())
                 .arg(mqry.value(6).toString())
-                .arg(mqry.value(7).toString().replace(QChar(39), QStringLiteral("''")))
+                .arg(mqry.value(7).toString().replace(QChar(39), QChar(8217)))
                 .arg(mqry.value(9).toString())
                 .arg(chktime)
                 .arg(mqry.value(9).toString())
@@ -927,7 +927,7 @@ QString BsImportR16Dlg::importSheet(const QString &oldSheet, const QString &newS
         double actPrice = mqry.value(2).toDouble();
         int actQty = mqry.value(3).toInt();
         double actMoney = mqry.value(4).toDouble();
-        QString rowMark = mqry.value(5).toString().replace(QChar(39), QString());
+        QString rowMark = mqry.value(5).toString().replace(QChar(39), QChar(8217));
         rowTime += 100;
 
         QString r17cargo = r16cargo;

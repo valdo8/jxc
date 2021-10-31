@@ -164,7 +164,7 @@ void BsFldEditor::restoreValue()
 
 QString BsFldEditor::getDataValueForSql() const
 {
-    QString txt = getStringForSave(text()).replace(QChar(39), QString()).trimmed();
+    QString txt = getStringForSave(text()).replace(QChar(39), QChar(8217)).trimmed();
     return ( mpField->mFlags & bsffText ) ? QChar(39) + txt + QChar(39) : txt;
 }
 

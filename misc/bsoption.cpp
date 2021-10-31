@@ -100,7 +100,7 @@ void BsOption::saveData()
     }
     for ( int i = 0, iLen = pnames.length(); i < iLen; ++i ) {
         QString optCode = pnames.at(i);
-        QString vsetting = QString(pvals.at(i)).replace(QChar(39), QStringLiteral("''"));
+        QString vsetting = QString(pvals.at(i)).replace(QChar(39), QChar(8217));
         if ( optCode.startsWith(QStringLiteral("stypes_")) || optCode.endsWith(QStringLiteral("_list")) ) {
             vsetting.replace(QChar(32), QString()).replace(QStringLiteral("，"), QStringLiteral(","));
         }

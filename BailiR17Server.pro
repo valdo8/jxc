@@ -60,6 +60,7 @@ HEADERS += \
     dialog/bscreatecolortype.h \
     dialog/bsshoplocdlg.h \
     dialog/bstagselectdlg.h \
+    dialog/bspricebatch.h \
     misc/bsimportr15dlg.h \
     misc/bsimportr16dlg.h \
     misc/bsimportregdlg.h \
@@ -122,6 +123,7 @@ SOURCES += main/main.cpp \
     dialog/bscreatecolortype.cpp \
     dialog/bsshoplocdlg.cpp \
     dialog/bstagselectdlg.cpp \
+    dialog/bspricebatch.cpp \
     misc/bsimportr15dlg.cpp \
     misc/bsimportr16dlg.cpp \
     misc/bsimportregdlg.cpp \

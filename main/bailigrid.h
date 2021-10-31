@@ -473,6 +473,8 @@ public:
     QStringList getSizerNameListForPrint();
     QStringList getSizerQtysOfRowForPrint(const int row, const bool printZeroQty = false);
     void tryLocateCargoRow(const QString &cargo, const QString &color);
+    QString getDefaultPriceField();
+    void autoBatchPrice(const QString &priceName);
 
 signals:
     void cargoRowSelected(const QString &cargo, const QString &color);
@@ -496,7 +498,7 @@ private:
 
     void readyColor(const int row, const QString &cargo);
     void readySizer(const int row, const QString &cargo);
-    void readyPrice(const int row, const QString &cargo);
+    void readyPrice(const int row, const QString &cargo, const QString &useName);
     void readyHpRef(const int row, const QString &cargo);
 
     void checkShrinkSizeColCountForNewCargoCancel(const int row);

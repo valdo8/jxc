@@ -39,6 +39,7 @@ void BsTerminator::run()
     //准备
     {
         QSqlDatabase db = QSqlDatabase::addDatabase(QStringLiteral("QSQLITE"), mDatabaseConnectionName);
+        db.setConnectOptions("QSQLITE_ENABLE_REGEXP");
         db.setDatabaseName(loginFile);
         if ( !db.open() ) {
             qDebug() << "open database failed in net thread.";
@@ -662,7 +663,7 @@ void BsTerminator::serverLog(const QString &reqMan, const int reqType, const QSt
 {
     QSqlDatabase db = QSqlDatabase::database(mDatabaseConnectionName);
     QString content = reqInfo;
-    content.replace(QChar(39), QString());
+    content.replace(QChar(39), QChar(8217));
     QString sql = QStringLiteral("insert into serverlog(reqtime, reqman, reqtype, reqinfo) "
                                  "values(%1, '%2', %3, '%4');")
             .arg(QDateTime::currentMSecsSinceEpoch()).arg(reqMan).arg(reqType).arg(content);
@@ -714,7 +715,7 @@ QString BsTerminator::reqLogin(const QString &packstr, BsFronter *user)
 
     //移除危险字符，并拆解参数
     QString spack = packstr;
-    spack.replace(QChar(39), QString());  //禁止单引号
+    spack.replace(QChar(39), QChar(8217));  //禁止单引号
     QStringList params = spack.split(QChar('\f'));
 
     //前置检查
@@ -942,7 +943,7 @@ QString BsTerminator::reqQrySheet(const QString &packstr, const BsFronter *user)
 
     //移除危险字符，并拆解参数
     QString spack = packstr;
-    spack.replace(QChar(39), QString());  //禁止单引号
+    spack.replace(QChar(39), QChar(8217));  //禁止单引号
     QStringList params = spack.split(QChar('\f'));
 
     //前置检查
@@ -1054,7 +1055,7 @@ QString BsTerminator::reqQryPick(const QString &packstr, const BsFronter *user)
 
     //移除危险字符，并拆解参数
     QString spack = packstr;
-    spack.replace(QChar(39), QString());  //禁止单引号
+    spack.replace(QChar(39), QChar(8217));  //禁止单引号
     QStringList params = spack.split(QChar('\f'));
 
     //前置检查
@@ -1097,7 +1098,7 @@ QString BsTerminator::reqQryPick(const QString &packstr, const BsFronter *user)
                 if ( ps.length() == 2 ) {
                     int x = QString(ps.at(0)).toInt();
                     QString v = QString(ps.at(1));
-                    v = v.replace(QChar(39), QString());
+                    v = v.replace(QChar(39), QChar(8217));
                     if ( x >= 1 && x <= 6 ) {
                         limExps << QStringLiteral("attr%1='%2'").arg(x).arg(v);
                     }
@@ -1152,7 +1153,7 @@ QString BsTerminator::reqBizOpen(const QString &packstr, const BsFronter *user)
 
     //移除危险字符，并拆解参数
     QString spack = packstr;
-    spack.replace(QChar(39), QString());  //禁止单引号
+    spack.replace(QChar(39), QChar(8217));  //禁止单引号
     QStringList params = spack.split(QChar('\f'));
 
     //前置检查
@@ -1230,7 +1231,7 @@ QString BsTerminator::reqBizEdit(const QString &packstr, const BsFronter *user)
 
     //移除危险字符，并拆解参数
     QString spack = packstr;
-    spack.replace(QChar(39), QString());  //禁止单引号
+    spack.replace(QChar(39), QChar(8217));  //禁止单引号
     QStringList params = spack.split(QChar('\f'));
 
     //前置检查
@@ -1343,7 +1344,7 @@ QString BsTerminator::reqBizDelete(const QString &packstr, const BsFronter *user
 
     //移除危险字符，并拆解参数
     QString spack = packstr;
-    spack.replace(QChar(39), QString());  //禁止单引号
+    spack.replace(QChar(39), QChar(8217));  //禁止单引号
     QStringList params = spack.split(QChar('\f'));
 
     //前置检查
@@ -1456,7 +1457,7 @@ QString BsTerminator::reqBizInsert(const QString &packstr, const BsFronter *user
 
     //移除危险字符，并拆解参数
     QString spack = packstr;
-    spack.replace(QChar(39), QString());  //禁止单引号
+    spack.replace(QChar(39), QChar(8217));  //禁止单引号
     QStringList params = spack.split(QChar('\f'));
 
     //前置检查
@@ -1722,7 +1723,7 @@ QString BsTerminator::reqFeeInsert(const QString &packstr, const BsFronter *user
 
     //移除危险字符，并拆解参数
     QString spack = packstr;
-    spack.replace(QChar(39), QString());  //禁止单引号
+    spack.replace(QChar(39), QChar(8217));  //禁止单引号
     QStringList params = spack.split(QChar('\f'));
 
     //前置检查
@@ -1859,7 +1860,7 @@ QString BsTerminator::reqRegInsert(const QString &packstr, const BsFronter *user
 
     //移除危险字符，并拆解参数
     QString spack = packstr;
-    spack.replace(QChar(39), QString());  //禁止单引号
+    spack.replace(QChar(39), QChar(8217));  //禁止单引号
     QStringList params = spack.split(QChar('\f'));
 
     //前置检查
@@ -1965,7 +1966,7 @@ QString BsTerminator::reqRegCargo(const QString &packstr, const BsFronter *user)
 
     //移除危险字符，并拆解参数
     QString spack = packstr;
-    spack.replace(QChar(39), QString());  //禁止单引号
+    spack.replace(QChar(39), QChar(8217));  //禁止单引号
     QStringList params = spack.split(QChar('\f'));
 
     //前置检查
@@ -2071,7 +2072,7 @@ QString BsTerminator::reqQrySumm(const QString &packstr, const BsFronter *user) 
 
     //移除危险字符，并拆解参数
     QString spack = packstr;
-    spack.replace(QChar(39), QString());  //禁止单引号
+    spack.replace(QChar(39), QChar(8217));  //禁止单引号
     QStringList params = spack.split(QChar('\f'));
 
     //前置检查
@@ -2192,7 +2193,7 @@ QString BsTerminator::reqQryCash(const QString &packstr, const BsFronter *user) 
 
     //移除危险字符，并拆解参数
     QString spack = packstr;
-    spack.replace(QChar(39), QString());  //禁止单引号
+    spack.replace(QChar(39), QChar(8217));  //禁止单引号
     QStringList params = spack.split(QChar('\f'));
 
     //前置检查
@@ -2286,7 +2287,7 @@ QString BsTerminator::reqQryRest(const QString &packstr, const BsFronter *user) 
 
     //移除危险字符，并拆解参数
     QString spack = packstr;
-    spack.replace(QChar(39), QString());  //禁止单引号
+    spack.replace(QChar(39), QChar(8217));  //禁止单引号
     QStringList params = spack.split(QChar('\f'));
 
     //前置检查
@@ -2402,7 +2403,7 @@ QString BsTerminator::reqQryStock(const QString &packstr, const BsFronter *user)
 
     //移除危险字符，并拆解参数
     QString spack = packstr;
-    spack.replace(QChar(39), QString());  //禁止单引号
+    spack.replace(QChar(39), QChar(8217));  //禁止单引号
     QStringList params = spack.split(QChar('\f'));
 
     //前置检查
@@ -2571,7 +2572,7 @@ QString BsTerminator::reqQryView(const QString &packstr, const BsFronter *user) 
 
     //移除危险字符，并拆解参数
     QString spack = packstr;
-    spack.replace(QChar(39), QString());  //禁止单引号
+    spack.replace(QChar(39), QChar(8217));  //禁止单引号
     QStringList params = spack.split(QChar('\f'));
 
     //前置检查
@@ -2742,10 +2743,8 @@ QString BsTerminator::reqQryObject(const QString &packstr, const BsFronter *user
 
     //移除危险字符，并拆解参数
     QString spack = packstr;
-    spack.replace(QChar(39), QString());  //禁止单引号
+    spack.replace(QChar(39), QChar(8217));  //禁止单引号
     QStringList params = spack.split(QChar('\f'));
-
-    qDebug() << params;
 
     //前置检查
     QStringList respList;
@@ -2803,7 +2802,7 @@ QString BsTerminator::reqQryImage(const QString &packstr, const BsFronter *user)
 
     //移除危险字符，并拆解参数
     QString spack = packstr;
-    spack.replace(QChar(39), QString());  //禁止单引号
+    spack.replace(QChar(39), QChar(8217));  //禁止单引号
     QStringList params = spack.split(QChar('\f'));
 
     //前置检查
@@ -2892,7 +2891,7 @@ QString BsTerminator::reqQryPrintOwe(const QString &packstr, const BsFronter *us
 
     //移除危险字符，并拆解参数
     QString spack = packstr;
-    spack.replace(QChar(39), QString());  //禁止单引号
+    spack.replace(QChar(39), QChar(8217));  //禁止单引号
     QStringList params = spack.split(QChar('\f'));
 
     //前置检查
@@ -3038,7 +3037,7 @@ QString BsTerminator::reqGrpCreate(const QString &packstr) {
 
     //移除危险字符，并拆解参数
     QString spack = packstr;
-    spack.replace(QChar(39), QString());  //禁止单引号
+    spack.replace(QChar(39), QChar(8217));  //禁止单引号
     QStringList params = spack.split(QChar('\f'));
 
     //前置检查
@@ -3100,7 +3099,7 @@ QString BsTerminator::reqGrpRename(const QString &packstr) {
 
     //移除危险字符，并拆解参数
     QString spack = packstr;
-    spack.replace(QChar(39), QString());  //禁止单引号
+    spack.replace(QChar(39), QChar(8217));  //禁止单引号
     QStringList params = spack.split(QChar('\f'));
 
     //前置检查
@@ -3150,7 +3149,7 @@ QString BsTerminator::reqGrpDismiss(const QString &packstr) {
 
     //移除危险字符，并拆解参数
     QString spack = packstr;
-    spack.replace(QChar(39), QString());  //禁止单引号
+    spack.replace(QChar(39), QChar(8217));  //禁止单引号
     QStringList params = spack.split(QChar('\f'));
 
     //前置检查
@@ -3202,7 +3201,7 @@ QString BsTerminator::reqGrpInvite(const QString &packstr) {
 
     //移除危险字符，并拆解参数
     QString spack = packstr;
-    spack.replace(QChar(39), QString());  //禁止单引号
+    spack.replace(QChar(39), QChar(8217));  //禁止单引号
     QStringList params = spack.split(QChar('\f'));
 
     //前置检查
@@ -3279,7 +3278,7 @@ QString BsTerminator::reqGrpKickoff(const QString &packstr) {
 
     //移除危险字符，并拆解参数
     QString spack = packstr;
-    spack.replace(QChar(39), QString());  //禁止单引号
+    spack.replace(QChar(39), QChar(8217));  //禁止单引号
     QStringList params = spack.split(QChar('\f'));
 
     //前置检查

@@ -2439,7 +2439,7 @@ void BsAbstractFormGrid::commitData(QWidget *editor)
         if ( edt )
         {
             QString txt = edt->text();
-            txt.replace(QChar(39), QString()).replace(QRegularExpression("\\s+"), QString());
+            txt.replace(QChar(39), QChar(8217)).replace(QRegularExpression("\\s+"), QString());
             edt->setText(txt);
         }
     }
@@ -2732,7 +2732,7 @@ QString BsAbstractFormGrid::getSqliteRowInsSql(const int row)
             QTableWidgetItem *it = item(row, i);
             if ( (flags & bsffText) == bsffText )
             {
-                QString txt = it->text().replace(QChar(39), QStringLiteral("''"));
+                QString txt = it->text().replace(QChar(39), QChar(8217));
                 valueList << QStringLiteral("'%1'").arg(txt.left(mCols.at(i)->mLenDots));   //控制长度
             }
             else
@@ -2787,7 +2787,7 @@ QString BsAbstractFormGrid::getSqliteRowUpdSql(const int row)
             {
                 if ( (flags & bsffText) == bsffText )
                 {
-                    QString txt = it->text().replace(QChar(39), QStringLiteral("''"));
+                    QString txt = it->text().replace(QChar(39), QChar(8217));
                     exps << QStringLiteral("%1='%2'").arg(col->mFldName).arg(txt.left(mCols.at(i)->mLenDots));   //控制长度
                 }
                 else
@@ -2991,7 +2991,7 @@ QStringList BsRegGrid::getSqliteLimitKeyFields(const bool forNew)
 QStringList BsRegGrid::getSqliteLimitKeyValues(const int row, const bool forNew)
 {
     if ( forNew ) return QStringList();       //新行没有limit条件
-    QString txt = item(row, 0)->data(Qt::UserRole + OFFSET_OLD_VALUE).toString().replace(QChar(39), QStringLiteral("''"));
+    QString txt = item(row, 0)->data(Qt::UserRole + OFFSET_OLD_VALUE).toString().replace(QChar(39), QChar(8217));
     QString val = QStringLiteral("'%1'").arg(txt.left(mCols.at(0)->mLenDots));
     return QStringList() << val;
 }
@@ -3315,7 +3315,7 @@ QString BsSheetCargoGrid::inputNewCargoRow(const QString &cargo, const QString &
         readySizer(useRowIdx, cargo);
 
         //定价预备
-        readyPrice(useRowIdx, cargo);
+        readyPrice(useRowIdx, cargo, QString());
 
         //货备注
         readyHpRef(useRowIdx, cargo);
@@ -3515,6 +3515,27 @@ void BsSheetCargoGrid::tryLocateCargoRow(const QString &cargo, const QString &co
     }
 }
 
+QString BsSheetCargoGrid::getDefaultPriceField()
+{
+    if ( mTable.startsWith(QStringLiteral("cg")) )
+        return QStringLiteral("buyprice");
+    else if ( mTable.startsWith(QStringLiteral("pf")) || mTable == QStringLiteral("dbd") )
+        return QStringLiteral("lotprice");
+    else if ( mTable.startsWith(QStringLiteral("ls")) )
+        return QStringLiteral("retprice");
+    else
+        return QStringLiteral("setprice");
+}
+
+void BsSheetCargoGrid::autoBatchPrice(const QString &priceName)
+{
+    for ( int i = 0, iLen = rowCount(); i < iLen; ++i ) {
+        readyPrice(i, item(i, 0)->text(), priceName);
+        recalcRow(i, 0);
+    }
+    updateFooterSumCount(false);
+}
+
 void BsSheetCargoGrid::addOneCargo(const QString &cargo, const QString &colorName, const QString &sizerName)
 {
     QString strErr = inputNewCargoRow(cargo, colorName, sizerName, 10000, false);
@@ -3573,7 +3594,7 @@ void BsSheetCargoGrid::commitData(QWidget *editor)
             readySizer(currentRow(), currentItem()->text());
 
             //定价预备
-            readyPrice(currentRow(), currentItem()->text());
+            readyPrice(currentRow(), currentItem()->text(), QString());
 
             //货备注
             readyHpRef(currentRow(), currentItem()->text());
@@ -3642,7 +3663,7 @@ void BsSheetCargoGrid::paintEvent(QPaintEvent *e)
     p.setFont(f);
     p.setPen(QColor(0, 180, 180));
     p.drawText(0, 0, w, viewport()->height(), Qt::AlignHCenter | Qt::AlignBottom,
-               QStringLiteral("点击“新建”按钮开始录单\u3000\u3000表格可直接编辑填写\u3000\u3000尺码列因未录货品暂不显示"));
+               QStringLiteral("点击“新建”按钮开始录单\u3000\u3000表格可直接编辑填写\u3000\u3000尺码列在录入具体一个货号后会自动显示"));
 }
 
 void BsSheetCargoGrid::scanBarocdeOneByOne(const QString &barcode)
@@ -3796,54 +3817,73 @@ void BsSheetCargoGrid::readySizer(const int row, const QString &cargo)
     updateSizerColTitles(row);
 }
 
-void BsSheetCargoGrid::readyPrice(const int row, const QString &cargo)
+void BsSheetCargoGrid::readyPrice(const int row, const QString &cargo, const QString &useName)
 {
-    double applyDiscount = mTraderDiscount;
+    QString applyPriceBase;
+    double applyDiscount;
 
-    //检查特例价格政策
-    if ( (mTable.startsWith(QStringLiteral("pf")) || mTable == QStringLiteral("lsd")) &&
-         !mTraderName.isEmpty() ) {
+    bool fixNamee = ( useName == QStringLiteral("setprice") ||
+                      useName == QStringLiteral("retprice") ||
+                      useName == QStringLiteral("buyprice") ||
+                      useName == QStringLiteral("lotprice") );
+    bool nameIsDicount;
+    double nameDiscount = useName.toDouble(&nameIsDicount);  //mTraderDiscount
 
-        QString sql = QStringLiteral("select traderExp, cargoExp, policyDis, useLevel "
-                                     "from lotpolicy "
-                                     "where startDate<=%1 and endDate>=%1 "
-                                     "order by useLevel desc;").arg(QDateTime::currentSecsSinceEpoch());
-        QSqlQuery qry;
-        qry.setForwardOnly(true);
-        qry.setNumericalPrecisionPolicy(QSql::LowPrecisionInt64);
-        qry.exec(sql);
-        while ( qry.next() ) {
+    if ( nameIsDicount && !useName.isEmpty() ) {
+        applyPriceBase = getDefaultPriceField();
+        applyDiscount = nameDiscount;
+    }
+    else if ( useName.contains(QStringLiteral("dis")) ) {
+        applyPriceBase = getDefaultPriceField();
+        applyDiscount = mTraderDiscount;
+    }
+    else if ( fixNamee ) {
+        applyPriceBase = useName;
+        applyDiscount = 1.00;
+    }
+    else {
+        applyPriceBase = getDefaultPriceField();
+        applyDiscount = mTraderDiscount;
 
-            QRegExp *traderExp = new QRegExp("^" + qry.value(0).toString() + "$", Qt::CaseInsensitive);
-            QRegExp *cargoExp = new QRegExp("^" + qry.value(1).toString() + "$", Qt::CaseInsensitive);
-            double policyDis = qry.value(2).toLongLong() / 10000.0;
+        //只有批发销售类才使用价格政策
+        if ( (mTable.startsWith(QStringLiteral("pf")) || mTable == QStringLiteral("lsd") || mTable == QStringLiteral("dbd")) &&
+             !mTraderName.isEmpty() ) {
 
-            if ( qry.value(0).toString().isEmpty() ||
-                 traderExp->exactMatch(mTraderName.toUpper()) ||
-                 traderExp->exactMatch(mTraderName.toLower()) ) {
+            QString sql = QStringLiteral("select traderExp, cargoExp, policyDis, useLevel "
+                                         "from lotpolicy "
+                                         "where startDate<=%1 and endDate>=%1 "
+                                         "order by useLevel desc;").arg(QDateTime::currentSecsSinceEpoch());
+            QSqlQuery qry;
+            qry.setForwardOnly(true);
+            qry.setNumericalPrecisionPolicy(QSql::LowPrecisionInt64);
+            qry.exec(sql);
+            while ( qry.next() ) {
 
-                if ( qry.value(1).toString().isEmpty() ||
-                     cargoExp->exactMatch(cargo.toUpper()) ||
-                     cargoExp->exactMatch(cargo.toLower()) ) {
+                QRegExp *traderExp = new QRegExp("^" + qry.value(0).toString() + "$", Qt::CaseInsensitive);
+                QRegExp *cargoExp = new QRegExp("^" + qry.value(1).toString() + "$", Qt::CaseInsensitive);
+                double policyDis = qry.value(2).toLongLong() / 10000.0;
 
-                    applyDiscount = policyDis;
-                    break;
+                if ( qry.value(0).toString().isEmpty() ||
+                     traderExp->exactMatch(mTraderName.toUpper()) ||
+                     traderExp->exactMatch(mTraderName.toLower()) ) {
+
+                    if ( qry.value(1).toString().isEmpty() ||
+                         cargoExp->exactMatch(cargo.toUpper()) ||
+                         cargoExp->exactMatch(cargo.toLower()) ) {
+
+                        applyDiscount = policyDis;
+                        break;
+                    }
                 }
+
+                delete cargoExp;
+                delete traderExp;
             }
         }
     }
 
-    QString usePriceName;
-    if ( mTable.startsWith(QStringLiteral("cg")) )
-        usePriceName = QStringLiteral("buyprice");
-    else if ( mTable.startsWith(QStringLiteral("pf")) )
-        usePriceName = QStringLiteral("lotprice");
-    else if ( mTable.startsWith(QStringLiteral("ls")) )
-        usePriceName = QStringLiteral("retprice");
-    else
-        usePriceName = QStringLiteral("setprice");
-
-    double usePrice = applyDiscount * (dsCargo->getValue(cargo, usePriceName).toLongLong() / 10000.0);
+    //计算结果
+    double usePrice = applyDiscount * (dsCargo->getValue(cargo, applyPriceBase).toLongLong() / 10000.0);
     double setPrice = dsCargo->getValue(cargo, QStringLiteral("setprice")).toLongLong() / 10000.0;
     int priceCol = getColumnIndexByFieldName(QStringLiteral("price"));
     int discountCol = getColumnIndexByFieldName(QStringLiteral("discount"));
