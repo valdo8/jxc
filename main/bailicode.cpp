@@ -713,7 +713,7 @@ void initMapMsg()
     mapMsg.insert("menu_last_year", QStringLiteral("去年"));
     mapMsg.insert("menu_batch_edit", QStringLiteral("登记名批量修改器"));
     mapMsg.insert("menu_batch_check", QStringLiteral("单据批量审核器"));
-    mapMsg.insert("menu_stock_reset", QStringLiteral("清空盘点库存帐"));
+    mapMsg.insert("menu_stock_reset", QStringLiteral("库存帐盘点清空"));
     mapMsg.insert("menu_barcode_maker", QStringLiteral("货品明细编码器"));
     mapMsg.insert("menu_label_designer", QStringLiteral("吊牌标签设计器"));
     mapMsg.insert("menu_custom", QStringLiteral("更多定制…"));
