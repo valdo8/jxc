@@ -409,9 +409,17 @@ void LxWelcome::execUpgradeDownSuccess()
     fileDown.rename(qApp->arguments().at(0));
 
     //提示需要退出程序后，结束程序
+#ifdef Q_OS_UNIX
+    mpBtnRight->setText(mapMsg.value("btn_ok"));
+    mpBtnRight->setIcon(QIcon(":/icon/ok.png"));
+    mpBtnRight->show();
+    mpProgress->showMessage(QStringLiteral(UPGRADEOK_NEED_RESTART), true);
+    mNeedQuit = true;
+#else
     QMessageBox::information(this, QString(), QStringLiteral(UPGRADEOK_NEED_RESTART));
     mCanOver  = true;
     mNeedQuit = true;
+#endif
 }
 
 void LxWelcome::execUpgradeDownFail(const QString &prErr)
