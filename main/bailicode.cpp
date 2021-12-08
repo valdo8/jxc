@@ -9,7 +9,7 @@ namespace BailiSoft {
 //版本号
 int lxapp_version_major = 17;
 int lxapp_version_minor = 2;
-int lxapp_version_patch = 3;
+int lxapp_version_patch = 4;
 /*
 ... 帮助文档————登记推荐实践零售与批发、本店与代销
 2.0.ok 爱美无价平台功能上线
@@ -17,6 +17,7 @@ int lxapp_version_patch = 3;
 2.1.ok 取消审核成功后的对话框重复提示。
 2.2.ok 标签条形码文字居中
 2.3.ok 工具箱自动划价功能
+2.4.ok 复制粘贴特殊符号检查
 */
 
 //表基名（英）

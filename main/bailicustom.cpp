@@ -145,44 +145,39 @@ void checkLicenseDog()
 //                     << "  dogNetPass: " << dogNetPass;
         }
     }
-
-    //生成service.key文件，内容约定：第一行dogUserName, 第二行dogNetName, 第三行dogNetPass
-    QDir dir( qApp->applicationDirPath() );
-    QFile file(dir.absoluteFilePath(QStringLiteral("service.key")));
-    if (file.open(QIODevice::WriteOnly | QIODevice::Text)) {
-        QTextStream strm(&file);
-        strm << QStringLiteral("%1\n%2\n%3").arg(dogUserName).arg(dogNetName).arg(dogNetPass);
-        file.close();
-    }
 #endif
 }
 
 //检查读锁（软锁）
 void checkLicenseSoftKey()
 {
+    QString userKeyFile;
+
     QDir dir( qApp->applicationDirPath() );
     QStringList fileNames = dir.entryList((QStringList() << "*.key"), QDir::Files|QDir::Readable);
-    if ( fileNames.length() != 1 )
-        return;
+    for ( int i = 0, iLen = fileNames.length(); i < iLen; ++i ) {
+        if (fileNames.at(i) != QStringLiteral("service.key")) {
+            userKeyFile = fileNames.at(i);
+        }
+    }
+    if ( userKeyFile.isEmpty()) return;
 
-    QFile file( dir.absoluteFilePath(fileNames.at(0)) );
-    if (!file.open(QIODevice::ReadOnly | QIODevice::Text))
-        return;
+    QFile file( dir.absoluteFilePath(userKeyFile) );
+    if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) return;
 
     QTextStream in(&file);
     QString bytes = in.readAll();
     file.close();
 
     QString text = QString::fromUtf8(QByteArray::fromBase64(bytes.toLatin1()));
-    QStringList flds = text.split(QChar('\n'));
-    if ( flds.length() < 3 )
-        return;
+    QStringList flds = text.split(QChar('\t'));
+    if ( flds.length() != 8 ) return;
 
     //service.key文件，内容约定：第一行dogUserName, 第二行dogNetName, 第三行dogNetPass
     dogOk = true;
-    dogUserName = flds.at(0);
-    dogNetName = flds.at(1);
-    dogNetPass = flds.at(2);
+    dogUserName = flds.at(1);
+    dogNetName = flds.at(2);
+    dogNetPass = flds.at(3);
     httpUserName = dogNetName;
     QString httpPassSecret = httpUserName + dogNetPass + QStringLiteral("aimeiwujia.com");
     httpPassHash = QCryptographicHash::hash(httpPassSecret.toLatin1(), QCryptographicHash::Sha256).toHex();

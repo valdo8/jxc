@@ -2732,7 +2732,7 @@ QString BsAbstractFormGrid::getSqliteRowInsSql(const int row)
             QTableWidgetItem *it = item(row, i);
             if ( (flags & bsffText) == bsffText )
             {
-                QString txt = it->text().replace(QChar(39), QChar(8217));
+                QString txt = it->text().replace(QChar(39), QChar(8217)).trimmed();
                 valueList << QStringLiteral("'%1'").arg(txt.left(mCols.at(i)->mLenDots));   //控制长度
             }
             else
@@ -2787,7 +2787,7 @@ QString BsAbstractFormGrid::getSqliteRowUpdSql(const int row)
             {
                 if ( (flags & bsffText) == bsffText )
                 {
-                    QString txt = it->text().replace(QChar(39), QChar(8217));
+                    QString txt = it->text().replace(QChar(39), QChar(8217)).trimmed();
                     exps << QStringLiteral("%1='%2'").arg(col->mFldName).arg(txt.left(mCols.at(i)->mLenDots));   //控制长度
                 }
                 else
@@ -2992,7 +2992,7 @@ QStringList BsRegGrid::getSqliteLimitKeyValues(const int row, const bool forNew)
 {
     if ( forNew ) return QStringList();       //新行没有limit条件
     QString txt = item(row, 0)->data(Qt::UserRole + OFFSET_OLD_VALUE).toString().replace(QChar(39), QChar(8217));
-    QString val = QStringLiteral("'%1'").arg(txt.left(mCols.at(0)->mLenDots));
+    QString val = QStringLiteral("'%1'").arg(txt.left(mCols.at(0)->mLenDots).trimmed());
     return QStringList() << val;
 }
 
