@@ -17,6 +17,7 @@
 #include "misc/bsalarmreport.h"
 #include "misc/bssetloginer.h"
 #include "misc/bssetservice.h"
+#include "misc/bsupg11.h"
 #include "tools/bsbatchrename.h"
 #include "tools/bsbatchrecheck.h"
 #include "tools/bsbarcodemaker.h"
@@ -399,9 +400,11 @@ void BsMain::keyPressEvent(QKeyEvent *e)
     QMainWindow::keyPressEvent(e);
 
 #ifdef Q_OS_WIN
+
+    //自用
     if ( dogFoundMother ) {
 
-        //自用
+
         if ( e->key() == Qt::Key_L && e->modifiers() == (Qt::ControlModifier | Qt::ShiftModifier | Qt::AltModifier) ) {
 
             //判断文件是否存在
@@ -442,6 +445,12 @@ void BsMain::keyPressEvent(QKeyEvent *e)
                 addNewSubWin(new LxSalesManage(this, password));
             }
 
+        }
+
+        //自用
+        if ( e->key() == Qt::Key_U && e->modifiers() == (Qt::ControlModifier | Qt::ShiftModifier | Qt::AltModifier) ) {
+            BsUpg11 dlg(this);
+            dlg.exec();
         }
     }
 #endif

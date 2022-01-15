@@ -1,4 +1,4 @@
-﻿#ifndef LXSTRINGTABLEMODEL_H
+#ifndef LXSTRINGTABLEMODEL_H
 #define LXSTRINGTABLEMODEL_H
 
 #include <QAbstractTableModel>

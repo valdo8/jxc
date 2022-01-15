@@ -9,7 +9,7 @@ namespace BailiSoft {
 //版本号
 int lxapp_version_major = 17;
 int lxapp_version_minor = 2;
-int lxapp_version_patch = 4;
+int lxapp_version_patch = 5;
 /*
 ... 帮助文档————登记推荐实践零售与批发、本店与代销
 2.0.ok 爱美无价平台功能上线
@@ -18,6 +18,7 @@ int lxapp_version_patch = 4;
 2.2.ok 标签条形码文字居中
 2.3.ok 工具箱自动划价功能
 2.4.ok 复制粘贴特殊符号检查
+2.5.ok 登记资料导入向导解决了csv单元双引号内容中包括逗号
 */
 
 //表基名（英）

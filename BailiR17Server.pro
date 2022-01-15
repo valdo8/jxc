@@ -74,7 +74,8 @@ HEADERS += \
     misc/bssetloginer.h \
     misc/bsfielddefinedlg.h \
     misc/bssetservice.h \
-    misc/bsdebug.h
+    misc/bsdebug.h \
+    misc/bsupg11.h
 
 SOURCES += main/main.cpp \
     admin_sales/lxsalesmanage.cpp \
@@ -136,7 +137,8 @@ SOURCES += main/main.cpp \
     misc/bsmdiarea.cpp \
     misc/bssetloginer.cpp \
     misc/bsfielddefinedlg.cpp \
-    misc/bssetservice.cpp
+    misc/bssetservice.cpp \
+    misc/bsupg11.cpp
 
 RESOURCES += \
     resources/all.qrc

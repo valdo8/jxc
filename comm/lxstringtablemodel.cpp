@@ -25,7 +25,9 @@ void LxStringTableModel::resetData(const QString &prStrData, const bool newFirst
         mRows = 0;
         mCols = 0;
     } else {
-        QStringList lsCells = mDataLines.at(0).split(mSpliter);
+        QStringList lsCells = (mSpliter == QChar(9))
+                ? mDataLines.at(0).split(mSpliter)
+                : mDataLines.at(0).split(QRegularExpression(",\\s*(?![^\"]*\"\\,)"));
         mRows = mDataLines.count();
         mCols = lsCells.count();
     }
@@ -60,10 +62,26 @@ QVariant LxStringTableModel::data(const QModelIndex &index, int role) const
         int iRow = index.row();
         int iCol = index.column();
 
-        QStringList sCells = mDataLines.at(iRow).split(mSpliter);
-        if (iCol < sCells.count())
-            return sCells.at(iCol);
-        else
+        QStringList sCells = (mSpliter == QChar(9))
+                ? mDataLines.at(iRow).split(mSpliter)
+                : mDataLines.at(iRow).split(QRegularExpression(",\\s*(?![^\"]*\"\\,)"));
+        if (iCol < sCells.count()) {
+
+            if (mSpliter == QChar(9)) {
+                return sCells.at(iCol);
+            } else {
+                QString s = sCells.at(iCol);
+                if ( s.length() < 2 ) {
+                    return s;
+                } else {
+                    if (s.at(0) == QChar('"') && s.at(s.length()-1) == QChar('"')) {
+                        return s.mid(1, s.length() - 2);
+                    } else {
+                        return s;
+                    }
+                }
+            }
+        } else
             return QVariant();
     }
 

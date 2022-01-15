@@ -2938,7 +2938,9 @@ void BsRegGrid::commitData(QWidget *editor)
     //货号强制大写
     QLineEdit *edt = qobject_cast<QLineEdit*>(editor);
     if ( mTable == QStringLiteral("cargo") && currentColumn() == 0 && edt ) {
-        edt->setText(edt->text().toUpper());
+        QString val = edt->text().toUpper();
+        val = val.replace(QChar(9), QString()).replace(QChar(10), QString()).replace(QChar(13), QString());
+        edt->setText(val);
     }
 
     //提交
