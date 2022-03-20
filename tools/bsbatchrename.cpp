@@ -20,6 +20,7 @@ BsBatchRename::BsBatchRename(QWidget *parent) : QDialog(parent)
     mpRegTable->addItem(mapMsg.value("win_sizertype").split(QChar(9)).at(0), QStringLiteral("sizers"));
     mpRegTable->setCurrentIndex(0);
     mpRegTable->setMinimumWidth(200);
+    connect(mpRegTable, SIGNAL(currentIndexChanged(int)), this, SLOT(tableIndexChanged(int)));
 
     mpEdtOld = new QLineEdit(this);
     connect(mpEdtOld, &QLineEdit::textChanged, this, &BsBatchRename::checkReady);
@@ -66,6 +67,14 @@ void BsBatchRename::keyPressEvent(QKeyEvent *e)
 {
     if ( e->key() != Qt::Key_Enter && e->key() != Qt::Key_Return )
         QDialog::keyPressEvent(e);
+}
+
+void BsBatchRename::tableIndexChanged(int)
+{
+    QString tbl = mpRegTable->currentData().toString();
+    bool colorr = tbl == QStringLiteral("color") || tbl == QStringLiteral("sizer");
+    mpConCargo->setVisible(colorr);
+    mpLblConCargo->setVisible(colorr);
 }
 
 void BsBatchRename::checkReady()
@@ -131,27 +140,38 @@ void BsBatchRename::doExec()
         sqls << QStringLiteral("update szddtl set subject='%1' where subject='%2'").arg(strNew).arg(strOld);
         break;
 
-    //cargo, color
+    //cargo
     case 5:
+        for ( int i = 0, iLen = tbls.length(); i < iLen; ++i ) {
+            QString sql = QStringLiteral("update %1dtl set %2='%3' where %2='%4';")
+                    .arg(tbls.at(i)).arg(mpRegTable->currentData().toString()).arg(strNew).arg(strOld);
+            sqls << sql;
+        }
+        break;
+    //color
     case 6:
         for ( int i = 0, iLen = tbls.length(); i < iLen; ++i ) {
-            QString sql = QStringLiteral("update %1dtl set %2='%3' where %2='%4'")
-                    .arg(tbls.at(i)).arg(mpRegTable->currentData().toString()).arg(strNew).arg(strOld);
-            if ( mpRegTable->currentIndex() == 5 )
-                sql += QStringLiteral(" and cargo='%1';").arg(mpConCargo->text());
-            else
-                sql += QStringLiteral(";");
+            QString cargoCon = (mpConCargo->text().isEmpty())
+                    ? QString()
+                    : QStringLiteral(" and cargo='%1' ").arg(mpConCargo->text());
+            QString sql = QStringLiteral("update %1dtl set %2='%3' where %2='%4' %5;")
+                    .arg(tbls.at(i)).arg(mpRegTable->currentData().toString())
+                    .arg(strNew).arg(strOld).arg(cargoCon);
             sqls << sql;
         }
         break;
     //sizers
     default:
         for ( int i = 0, iLen = tbls.length(); i < iLen; ++i ) {
+            QString cargoCon = (mpConCargo->text().isEmpty())
+                    ? QString()
+                    : QStringLiteral(" and cargo='%1'").arg(mpConCargo->text());
+
             sqls << QStringLiteral("update %1dtl set sizers = "
                                    "substr(sizers, 1, instr(('\n' || sizers), '\n%3\t') - 1) || '%2' || "
                                    "substr(sizers, instr(('\n' || sizers), '\n%3\t') + %4) "
-                                   "where ('\n' || sizers) like '%\n%3\t%' and cargo='%5';")
-                    .arg(tbls.at(i)).arg(strNew).arg(strOld).arg(strOld.length()).arg(mpConCargo->text());
+                                   "where ('\n' || sizers) like '%\n%3\t%' %5;")
+                    .arg(tbls.at(i)).arg(strNew).arg(strOld).arg(strOld.length()).arg(cargoCon);
         }
         break;
     }

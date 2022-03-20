@@ -22,7 +22,7 @@ class BsSheetCargoGrid;
 class BsSheetFinanceGrid;
 class BsQueryGrid;
 class BsAbstractModel;
-class BsListModel;
+class BsSqlListModel;
 class BsRegModel;
 class BsSqlModel;
 class BsQryCheckor;
@@ -123,7 +123,7 @@ protected:
     QList<BsField*>     mFields;     //只是主表字段
 
     //公用数据集
-    BsListModel         *mpDsStype;
+    BsSqlListModel         *mpDsStype;
     BsSqlModel          *mpDsStaff;
     BsAbstractModel     *mpDsTrader;
 
@@ -258,7 +258,7 @@ protected:
     QAction *mpAcMainSave;
     QAction *mpAcMainCancel;
 
-    QAction *mpAcToolImport;
+    QAction *mpAcToolCopyImport;
     QAction *mpToolHideCurrentCol;
     QAction *mpToolShowAllCols;
 
@@ -386,6 +386,7 @@ protected:
     double getTraderDisByName(const QString &name);
 
     virtual bool printZeroSizeQty() { return false; }
+    virtual QString saveBeforeCheck() = 0;
     virtual void doOpenQuery() = 0;
     virtual void doSyncFindGrid() = 0;
     virtual void updateTabber(const bool editablee) = 0;
@@ -460,6 +461,7 @@ private slots:
 private:
     void savedReconcile(const int sheetId, const qint64 uptime);
     void cancelRestore();
+    bool autoRecordFinance();
 };
 
 
@@ -477,6 +479,7 @@ protected:
     void doSyncFindGrid();
     void updateTabber(const bool editablee);
     bool printZeroSizeQty() { return mpAcOptPrintZeroSizeQty->isChecked(); }
+    QString saveBeforeCheck() { return QString(); }
 
     void doToolExport();
     void doToolImport();
@@ -489,6 +492,7 @@ private slots:
     void taberIndexChanged(int index);
     void doToolAutoRePrice();
     void doToolDefineFieldName();
+    void doToolImportCsv();
     void doToolImportBatchBarcodes();
     void doToolPrintCargoLabels();
     void pickStockTraderChecked();
@@ -498,12 +502,12 @@ private:
     void restoreTaberMiniHeight();
     void loadFldsUserNameSetting();
 
-    BsListModel*        mpDsAttr1;
-    BsListModel*        mpDsAttr2;
-    BsListModel*        mpDsAttr3;
-    BsListModel*        mpDsAttr4;
-    BsListModel*        mpDsAttr5;
-    BsListModel*        mpDsAttr6;
+    BsSqlListModel*        mpDsAttr1;
+    BsSqlListModel*        mpDsAttr2;
+    BsSqlListModel*        mpDsAttr3;
+    BsSqlListModel*        mpDsAttr4;
+    BsSqlListModel*        mpDsAttr5;
+    BsSqlListModel*        mpDsAttr6;
 
     QList<BsField*>     mGridFlds;
     BsField*            mPickSizerFld;
@@ -532,6 +536,7 @@ private:
 
     QAction*    mpAcToolDefineName;
     QAction*    mpAcToolAutoRePrice;
+    QAction*    mpAcToolImportCsv;
     QAction*    mpAcToolImportBatchBarcodes;
     QAction*    mpAcToolPrintCargoLabels;
 
@@ -553,6 +558,7 @@ protected:
     void doSyncFindGrid();
     void updateTabber(const bool) {}
     void doToolImport() {}
+    QString saveBeforeCheck();
 
 private:
     QList<BsField*>     mGridFlds;

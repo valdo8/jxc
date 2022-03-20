@@ -18,8 +18,7 @@ void LxStringTableModel::resetData(const QString &prStrData, const bool newFirst
 
     mDataLines = prStrData.split("\n");
 
-    if (prStrData.count(QChar(9)) >= mDataLines.count())
-        mSpliter = QChar(9);        //TAB
+    if (prStrData.count(QChar(',')) < mDataLines.count()) mSpliter = QChar(9);        //TAB
 
     if (prStrData.isEmpty()) {
         mRows = 0;
@@ -72,12 +71,12 @@ QVariant LxStringTableModel::data(const QModelIndex &index, int role) const
             } else {
                 QString s = sCells.at(iCol);
                 if ( s.length() < 2 ) {
-                    return s;
+                    return s.trimmed();
                 } else {
                     if (s.at(0) == QChar('"') && s.at(s.length()-1) == QChar('"')) {
-                        return s.mid(1, s.length() - 2);
+                        return s.mid(1, s.length() - 2).trimmed();  //都是因为CSV格式excel自作聪明的识别导致用户只用excel不用记事本，不得不加的\t
                     } else {
-                        return s;
+                        return s.trimmed();
                     }
                 }
             }

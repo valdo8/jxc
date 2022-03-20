@@ -657,7 +657,9 @@ void BsMain::openRegSubject()
                 flds << attrx;
             }
         }
-        flds << QStringLiteral("adminboss")
+        flds << QStringLiteral("refsheetin")
+             << QStringLiteral("refsheetex")
+             << QStringLiteral("adminboss")
              << QStringLiteral("upman")
              << QStringLiteral("uptime");
         addNewSubWin(new BsRegWin(this, QStringLiteral("subject"), flds));

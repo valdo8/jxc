@@ -44,7 +44,7 @@ BsCopyImportSheetDlg::BsCopyImportSheetDlg(QWidget *parent) : QDialog(parent)
     QVBoxLayout *lay = new QVBoxLayout(this);
     lay->addLayout(form, 1);
     lay->addWidget(pBox, 0, Qt::AlignCenter);
-    setWindowTitle(QStringLiteral("复制导入单据"));
+    setWindowTitle(mapMsg.value("tool_copy_import_sheet"));
     setWindowFlags(windowFlags() &~ Qt::WindowContextHelpButtonHint);
 
     //init

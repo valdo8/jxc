@@ -14,7 +14,7 @@ class BsAbstractModel : public QAbstractTableModel
 {
     Q_OBJECT
 public:
-    BsAbstractModel(QWidget *parent) : QAbstractTableModel(parent) {}
+    BsAbstractModel(QObject *parent) : QAbstractTableModel(parent) {}
     int columnCount(const QModelIndex &parent = QModelIndex()) const { Q_UNUSED(parent) return 1;}
     virtual void reload() = 0;
     virtual bool keyExists(const QString &keyValue) = 0;
@@ -104,14 +104,15 @@ private:
 };
 }
 
-// BsListModel
+
+// BsSqlListModel
 namespace BailiSoft {
 
-class BsListModel : public BsAbstractModel
+class BsSqlListModel : public BsAbstractModel
 {
     Q_OBJECT
 public:
-    BsListModel(QWidget *parent, const QString &sql, const bool commaList = true);
+    BsSqlListModel(QWidget *parent, const QString &sql, const bool commaList = true);
     int rowCount(const QModelIndex &parent = QModelIndex()) const;
     QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const;
     void reload();
@@ -195,6 +196,29 @@ private:
 }
 
 
+// BsFinRel
+namespace BailiSoft {
+
+class BsFinRel
+{
+public:
+    BsFinRel();
+    void reload();
+    bool linkDefineNothing(const QString &sheet);
+    bool linkDefineInvalidd(const QString &sheet);
+    bool getDialogAssign(const QString &sheet, const qint64 amount, QWidget *winParent);
+    bool checkValuesAssign(const QString &sheet, QList<qint64> inValues, QList<qint64> exValues);
+    QStringList qryBatchSqls(const QString &sheet, const qint64 dated, const QString &proof,
+                             const QString &shop, const QString &trader);
+private:
+    QMap<QString, QPair<QStringList, QStringList> > mapDefine;
+    QList<qint64>   mInVals;
+    QList<qint64>   mExVals;
+    QChar           mDivChar;
+};
+}
+
+
 // init
 namespace BailiSoft {
 
@@ -242,6 +266,7 @@ extern BsRegModel*                      dsSubject;
 extern BsRegModel*                      dsShop;
 extern BsRegModel*                      dsCustomer;
 extern BsRegModel*                      dsSupplier;
+extern BsFinRel*                        finRel;
 
 extern QMap<QString, QString>                   mapOption;
 extern QMap<QString, QString>                   mapFldUserSetName;         //指用户额外自定义得字段名，可为空

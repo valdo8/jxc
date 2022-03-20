@@ -16,6 +16,7 @@
 #include "misc/bshistorywin.h"
 #include "misc/bsmdiarea.h"
 #include "misc/bsfielddefinedlg.h"
+#include "misc/bsimportsheetdlg.h"
 #include "dialog/bsbarcodesimportdlg.h"
 #include "dialog/bspickdatedlg.h"
 #include "dialog/bslicwarning.h"
@@ -24,6 +25,7 @@
 #include "dialog/bsshoplocdlg.h"
 #include "dialog/bstagselectdlg.h"
 #include "dialog/bspricebatch.h"
+#include "dialog/bsrefsheetdlg.h"
 #include <iostream>
 #include <QNetworkRequest>
 #include <QNetworkReply>
@@ -112,7 +114,7 @@ BsWin::BsWin(QWidget *parent, const QString &mainTable, const QStringList &field
             }
         }
         QString stypeListSql = QStringLiteral("select vsetting from bailioption where optcode='stypes_%1';").arg(baseTable);
-        mpDsStype = new BsListModel(this, stypeListSql);
+        mpDsStype = new BsSqlListModel(this, stypeListSql);
         mpDsStype->reload();
 
         //mpDsStaff
@@ -439,10 +441,22 @@ void BsWin::exportGrid(const BsGrid *grid, const QStringList headerPairs)
             QStringList cols;
             for ( int j = 0, jLen = grid->columnCount(); j < jLen; ++j ) {
                 if ( ! grid->isColumnHidden(j) ) {
-                    if ( grid->item(i, j) )
-                        cols << grid->item(i, j)->text();
-                    else
+                    if ( grid->item(i, j) ) {
+                        uint flag = grid->mCols.at(j)->mFlags;
+                        if ( (flag & bsffText) == bsffText ) {
+                            QString txt = grid->item(i, j)->text();
+                            if (txt.indexOf(QChar(44)) >= 0) {
+                                txt = txt.replace(QChar(34), QChar(96));
+                                cols << QStringLiteral("\"\t%1\"").arg(txt);
+                            } else {
+                                cols << QChar(9) + txt;
+                            }
+                        } else {
+                            cols << grid->item(i, j)->text();
+                        }
+                    } else {
                         cols << QString();
+                    }
                 }
             }
             rows << cols.join(QChar(44));
@@ -2321,7 +2335,7 @@ BsAbstractFormWin::BsAbstractFormWin(QWidget *parent, const QString &name, const
     mpToolBar->insertAction(mpAcToolSeprator, mpAcMainCancel);
 
     //工具箱
-    mpAcToolImport = mpMenuToolCase->addAction(QIcon(), mapMsg.value("tool_import_data"),
+    mpAcToolCopyImport = mpMenuToolCase->addAction(QIcon(), mapMsg.value("tool_import_data"),
                                                this, SLOT(clickToolImport()));
 
     mpMenuToolCase->addSeparator();
@@ -2344,7 +2358,7 @@ BsAbstractFormWin::BsAbstractFormWin(QWidget *parent, const QString &name, const
     mpAcMainDel->setProperty(BSACFLAGS, bsacfClean | bsacfPlusId | bsacfNotChk);
     mpAcMainSave->setProperty(BSACFLAGS, bsacfDirty);
     mpAcMainCancel->setProperty(BSACFLAGS, bsacfDirty);
-    mpAcToolImport->setProperty(BSACFLAGS, bsacfDirty);
+    mpAcToolCopyImport->setProperty(BSACFLAGS, bsacfDirty);
     mpAcOptHideDropRow->setProperty(BSACFLAGS, bsacfDirty);
 
     mpAcMainSave->setProperty(BSACRIGHT, true);
@@ -2552,7 +2566,7 @@ BsRegWin::BsRegWin(QWidget *parent, const QString &name, const QStringList &fiel
     mpAcMainCancel->setStatusTip(mapMsg.value("btn_reg_cancel").split(QChar(9)).at(1));
 
     mpAcOptHideDropRow->setProperty(BSACRIGHT, canDo(mRightWinName, bsrrDel));
-    mpAcToolImport->setProperty(BSACRIGHT, canDo(mRightWinName, bsrrNew));
+    mpAcToolCopyImport->setProperty(BSACRIGHT, canDo(mRightWinName, bsrrNew));
     mpAcToolExport->setProperty(BSACRIGHT, canDo(mRightWinName, bsrrExport));
     mpAcToolExport->setProperty(BSACFLAGS, bsacfClean);
 
@@ -2765,6 +2779,10 @@ void BsRegWin::doSave()
     else
     {
         QMessageBox::information(nullptr, mapMsg.value("app_name"), sqlErr);
+    }
+
+    if ( mMainTable == QStringLiteral("subject") ) {
+        finRel->reload();
     }
 }
 
@@ -3218,7 +3236,7 @@ BsAbstractSheetWin::BsAbstractSheetWin(QWidget *parent, const QString &name, con
     mpAcMainCheck->setProperty(BSACRIGHT, canDo(mRightWinName, bsrsCheck));
     mpAcMainPrint->setProperty(BSACRIGHT, canDo(mRightWinName, bsrsPrint));
     mpAcOptHideDropRow->setProperty(BSACRIGHT, canDo(mRightWinName, bsrsUpd));
-    mpAcToolImport->setProperty(BSACRIGHT, canDo(mRightWinName, bsrsNew) || canDo(mRightWinName, bsrsUpd));
+    mpAcToolCopyImport->setProperty(BSACRIGHT, canDo(mRightWinName, bsrsNew) || canDo(mRightWinName, bsrsUpd));
     mpAcToolExport->setProperty(BSACRIGHT, canDo(mRightWinName, bsrsExport));
 
     //工具箱
@@ -3867,6 +3885,14 @@ void BsAbstractSheetWin::doCheck()
             return;
     }
 
+    //收支关联自动记账
+    QString optValue = mapOption.value("set_sheet_link_finance");
+    bool reff = ( optValue == mapMsg.value("word_yes") || optValue == QStringLiteral("yes") );
+    if (reff && mMainTable != QStringLiteral("szd")) {
+        if (!autoRecordFinance()) return;
+    }
+
+    //审核本单
     qint64 chktime = QDateTime::currentMSecsSinceEpoch() / 1000;
     QString sql = QStringLiteral("update %1 set checker='%2', chktime=%3 where sheetid=%4;")
             .arg(mMainTable).arg(loginer).arg(chktime).arg(mCurrentSheetId);
@@ -3933,10 +3959,16 @@ void BsAbstractSheetWin::doDel()
     sqls << QStringLiteral("delete from %1dtl where parentid=%2;")
             .arg(mMainTable).arg(mCurrentSheetId);
 
-    sqls << QStringLiteral("update %1 set proof='', stype='', staff='', "
-                           "shop='', trader='', remark='', sumqty=0, summoney=0, sumdis=0, "
-                           "actpay=0, actowe=0, upman='%2', uptime=%3 where sheetid=%4")
-            .arg(mMainTable).arg(loginer).arg(uptime).arg(mCurrentSheetId);
+    if ( mMainTable == QStringLiteral("szd") ) {
+        sqls << QStringLiteral("update %1 set proof='', stype='', staff='', "
+                               "shop='', trader='', remark='', upman='%2', uptime=%3 where sheetid=%4")
+                .arg(mMainTable).arg(loginer).arg(uptime).arg(mCurrentSheetId);
+    } else {
+        sqls << QStringLiteral("update %1 set proof='', stype='', staff='', "
+                               "shop='', trader='', remark='', sumqty=0, summoney=0, sumdis=0, "
+                               "actpay=0, actowe=0, upman='%2', uptime=%3 where sheetid=%4")
+                .arg(mMainTable).arg(loginer).arg(uptime).arg(mCurrentSheetId);
+    }
 
     //批执行
     QString sqlErr = sqliteCommit(sqls);
@@ -3973,6 +4005,13 @@ void BsAbstractSheetWin::doSave() //注意与openSheet()的一致性
                              QMessageBox::Warning) )
             return;
     }
+
+    QString chkMsg = saveBeforeCheck();
+    if ( !chkMsg.isEmpty() ) {
+        QMessageBox::information(this, QString(), QStringLiteral("%1不能保存。").arg(chkMsg));
+        return;
+    }
+
 
     //基础变量
     int useSheetId = mCurrentSheetId;
@@ -4272,6 +4311,49 @@ void BsAbstractSheetWin::cancelRestore()
     }
 }
 
+bool BsAbstractSheetWin::autoRecordFinance()
+{
+    //没有设置关联，不用提示
+    if ( finRel->linkDefineNothing(mMainTable) ) {
+        return true;
+    }
+
+    //如果记收账目与记支账目都为多个，或者一边没有账目，则提示账目登记不规范，不能进行自动记账。
+    if ( finRel->linkDefineInvalidd(mMainTable) ) {
+        QMessageBox::information(this, QString(), QStringLiteral("账目关联登记不规范，自动记账未执行。\n"
+                                                                 "提示：记收关联与记支关联只能有一方为多账目，"
+                                                                 "另一方必须为单账目。收支两边必须都有关联。"));
+        return false;
+    }
+
+    //分配
+    qint64 amt = bsNumForSave(mpSheetGrid->getColSumByFieldName("actmoney")).toLongLong();
+    if ( ! finRel->getDialogAssign(mMainTable, amt, this) ) {
+        return false;
+    }
+
+    //记账
+    QStringList sqls = finRel->qryBatchSqls(mMainTable,
+                                            mpDated->mpEditor->getDataValue().toLongLong(),
+                                            mpSheetId->getDisplayText(),
+                                            mpShop->mpEditor->getDataValue(),
+                                            mpTrader->mpEditor->getDataValue());
+    QSqlDatabase db = QSqlDatabase::database();
+    db.transaction();
+    for ( int i = 0, iLen = sqls.length(); i < iLen; ++i ) {
+        QString sql = sqls.at(i);
+        db.exec(sql);
+        if ( db.lastError().isValid() ) {
+            db.rollback();
+            QMessageBox::information(this, QString(), QStringLiteral("该单自动收支记账失败，请手动记账。"));
+            return false;
+        }
+    }
+    db.commit();
+
+    return true;
+}
+
 
 // BsSheetCargoWin
 BsSheetCargoWin::BsSheetCargoWin(QWidget *parent, const QString &name, const QStringList &fields)
@@ -4298,15 +4380,15 @@ BsSheetCargoWin::BsSheetCargoWin(QWidget *parent, const QString &name, const QSt
         cols << QStringLiteral("hpmark");
     }
 
-    if ( mapOption.value("show_hpname_in_sheet_grid") == QStringLiteral("是") ) {
+    if ( mapOption.value("show_hpname_in_sheet_grid") == mapMsg.value("word_yes") ) {
         cols << QStringLiteral("hpname");
     }
 
-    if ( mapOption.value("show_hpunit_in_sheet_grid") == QStringLiteral("是") ) {
+    if ( mapOption.value("show_hpunit_in_sheet_grid") == mapMsg.value("word_yes") ) {
         cols << QStringLiteral("unit");
     }
 
-    if ( mapOption.value("show_hpprice_in_sheet_grid") == QStringLiteral("是") ) {
+    if ( mapOption.value("show_hpprice_in_sheet_grid") == mapMsg.value("word_yes") ) {
         cols << QStringLiteral("setprice");
     }
 
@@ -4369,6 +4451,11 @@ BsSheetCargoWin::BsSheetCargoWin(QWidget *parent, const QString &name, const QSt
     mpAcToolAutoRePrice->setProperty(BSACFLAGS, bsacfDirty);
     mpAcToolAutoRePrice->setProperty(BSACRIGHT, canDo(mRightWinName, bsrsNew) || canDo(mRightWinName, bsrsUpd));
 
+    mpAcToolImportCsv = mpMenuToolCase->addAction(QIcon(":/icon/export.png"), mapMsg.value("tool_import_data"),
+                                                            this, SLOT(doToolImportCsv()));
+    mpAcToolImportCsv->setProperty(BSACFLAGS, bsacfDirty);
+    mpAcToolImportCsv->setProperty(BSACRIGHT, canDo(mRightWinName, bsrsNew) || canDo(mRightWinName, bsrsUpd));
+
     mpAcToolImportBatchBarcodes = mpMenuToolCase->addAction(QIcon(), mapMsg.value("tool_import_batch_barcodes"),
                                                             this, SLOT(doToolImportBatchBarcodes()));
     mpAcToolImportBatchBarcodes->setProperty(BSACFLAGS, bsacfDirty);
@@ -4379,7 +4466,9 @@ BsSheetCargoWin::BsSheetCargoWin(QWidget *parent, const QString &name, const QSt
     mpAcToolPrintCargoLabels->setProperty(BSACFLAGS, bsacfClean | bsacfPlusId);
     mpAcToolPrintCargoLabels->setProperty(BSACRIGHT, canDo(mRightWinName, bsrsPrint));
 
-    mpAcToolImport->setText(mapMsg.value("tool_copy_import_sheet"));
+    mpAcToolCopyImport->setText(mapMsg.value("tool_copy_import_sheet"));
+    mpMenuToolCase->insertAction(mpAcToolCopyImport, mpAcToolImportCsv);
+    mpMenuToolCase->insertAction(mpAcToolCopyImport, mpAcToolImportBatchBarcodes);
 
     //开关盒
     mpAcOptHideNoQtySizerColWhenOpen->setVisible(true);
@@ -4413,12 +4502,12 @@ BsSheetCargoWin::BsSheetCargoWin(QWidget *parent, const QString &name, const QSt
     mpPnlScan->setStyleSheet("color:#999;");
 
     //拣货助手
-    mpDsAttr1 = new BsListModel(this, QStringLiteral("select distinct attr1 from cargo order by attr1;"), false);
-    mpDsAttr2 = new BsListModel(this, QStringLiteral("select distinct attr2 from cargo order by attr2;"), false);
-    mpDsAttr3 = new BsListModel(this, QStringLiteral("select distinct attr3 from cargo order by attr3;"), false);
-    mpDsAttr4 = new BsListModel(this, QStringLiteral("select distinct attr4 from cargo order by attr4;"), false);
-    mpDsAttr5 = new BsListModel(this, QStringLiteral("select distinct attr5 from cargo order by attr5;"), false);
-    mpDsAttr6 = new BsListModel(this, QStringLiteral("select distinct attr6 from cargo order by attr6;"), false);
+    mpDsAttr1 = new BsSqlListModel(this, QStringLiteral("select distinct attr1 from cargo order by attr1;"), false);
+    mpDsAttr2 = new BsSqlListModel(this, QStringLiteral("select distinct attr2 from cargo order by attr2;"), false);
+    mpDsAttr3 = new BsSqlListModel(this, QStringLiteral("select distinct attr3 from cargo order by attr3;"), false);
+    mpDsAttr4 = new BsSqlListModel(this, QStringLiteral("select distinct attr4 from cargo order by attr4;"), false);
+    mpDsAttr5 = new BsSqlListModel(this, QStringLiteral("select distinct attr5 from cargo order by attr5;"), false);
+    mpDsAttr6 = new BsSqlListModel(this, QStringLiteral("select distinct attr6 from cargo order by attr6;"), false);
 
     mpDsAttr1->reload();
     mpDsAttr2->reload();
@@ -4749,122 +4838,6 @@ void BsSheetCargoWin::doToolImport()
         }
     }
     qry.finish();
-
-    /* 因为已经做了doToolCopyImport()功能，此功能不开放，待删除。原因是当初对应的导出是特殊格式导入方便，后来改为普通表格格式，以下代码不能用。
-
-    QString dir = QStandardPaths::locate(QStandardPaths::DesktopLocation, QString(), QStandardPaths::LocateDirectory);
-    QString openData = openLoadTextFile(mapMsg.value("tool_import_data"), dir, mapMsg.value("i_formatted_csv_file"), this);
-    if ( openData.isEmpty() )
-        return;
-
-    //数据
-    QStringList lines = openData.split(QChar(10));
-
-    //以下确保等长
-    QStringList cargos;
-    QStringList colorNames;
-    QStringList sizerNames;
-    QStringList qtys;
-
-    //数据行
-    int cargoIdx = -1;
-    int colorIdx = -1;
-    int sizersIdx = -1;
-    int colCount = 0;
-    bool pass = true;
-    for ( int i = 0, iLen = lines.length(); i < iLen; ++i )
-    {
-        QStringList cols = QString(lines.at(i)).split(QChar(44));
-
-        //首行字段名，求列序
-        if ( i == 0 )
-        {
-            colCount = cols.length();
-            for ( int j = 0, jLen = cols.length(); j < jLen; ++j )
-            {
-                if ( cols.at(j) == QStringLiteral("cargo") ) {
-                    cargoIdx = j;
-                    continue;
-                }
-                if ( cols.at(j) == QStringLiteral("color") ) {
-                    colorIdx = j;
-                    continue;
-                }
-                if ( cols.at(j) == QStringLiteral("sizers") ) {
-                    sizersIdx = j;
-                    continue;
-                }
-            }
-            if ( cargoIdx < 0 || colorIdx < 0 || sizersIdx < 0 ) {
-                pass = false;
-                break;
-            }
-        }
-
-        //表格货品行
-        else
-        {
-            if ( cols.length() != colCount ) {
-                pass = false;
-                break;
-            }
-
-            QString cargo = cols.at(cargoIdx);
-            QString color = cols.at(colorIdx);
-            QString sizers = cols.at(sizersIdx);
-            QStringList spairs = sizers.split(QChar(';'), QString::SkipEmptyParts);
-            bool pairPass = true;
-            for ( int j = 0, jLen = spairs.length(); j < jLen; ++j )
-            {
-                QStringList spair = QString(spairs.at(j)).split(QChar(':'), QString::SkipEmptyParts);
-                if ( spair.length() == 2 ) {
-                    cargos << cargo;
-                    colorNames << color;
-                    sizerNames << spair.at(0);
-                    qtys << spair.at(1);
-                }
-                else {
-                    pairPass = false;
-                    break;
-                }
-            }
-
-            if ( ! pairPass ) {
-                pass = false;
-                break;
-            }
-        }
-    }
-
-    //处理
-    if ( pass ) {
-        QStringList lostReports;
-        for ( int i = 0, iLen = cargos.length(); i < iLen; ++i )
-        {
-            QString inputErr = mpSheetCargoGrid->inputNewCargoRow(cargos.at(i),
-                                                      colorNames.at(i),
-                                                      sizerNames.at(i),
-                                                      QString(qtys.at(i)).toLongLong(),
-                                                      false);
-            if ( !inputErr.isEmpty() )
-                lostReports << QStringLiteral("%1 %2 %3: %4件")
-                               .arg(cargos.at(i))
-                               .arg(colorNames.at(i))
-                               .arg(sizerNames.at(i))
-                               .arg(QString(qtys.at(i)).toLongLong() / 10000.0);
-        }
-
-        //报告
-        if ( lostReports.isEmpty() )
-            QMessageBox::information(this, QString(), mapMsg.value("i_import_sheet_finished_ok"));
-        else if ( lostReports.length() > 10 )
-            QMessageBox::information(this, QString(), mapMsg.value("i_import_sheet_too_many_lost"));
-        else
-            forceShowMessage(mapMsg.value("i_import_sheet_lost_following") + lostReports.join(QChar(10)));
-    }
-    else
-        QMessageBox::information(this, QString(), mapMsg.value("i_invliad_baili_sheet_data"));
-    */
 }
 
 void BsSheetCargoWin::traderEditing(const QString &text, const bool)
@@ -5010,6 +4983,20 @@ void BsSheetCargoWin::doToolDefineFieldName()
         else
             QMessageBox::information(this, QString(), sqlErr);
     }
+}
+
+void BsSheetCargoWin::doToolImportCsv()
+{
+    QString dir = QStandardPaths::locate(QStandardPaths::DesktopLocation, QString(), QStandardPaths::LocateDirectory);
+    QString openData = openLoadTextFile(mapMsg.value("tool_import_data"), dir, mapMsg.value("i_formatted_csv_file"), this);
+    openData = openData.replace(QStringLiteral("\r\n"), QStringLiteral("\n"))
+            .replace(QStringLiteral("\r"), QStringLiteral("\n"));
+    if ( openData.isEmpty() )
+        return;
+
+    BsImportSheetDlg dlg(this, mpSheetCargoGrid, openData.split(QChar(10)));
+    dlg.adjustSize();
+    dlg.exec();
 }
 
 void BsSheetCargoWin::doToolImportBatchBarcodes()
@@ -5208,7 +5195,7 @@ BsSheetFinanceWin::BsSheetFinanceWin(QWidget *parent, const QStringList &fields)
 
     mpAcMainPrint->setVisible(false);
     mpAcToolExport->setVisible(false);
-    mpAcToolImport->setVisible(false);
+    mpAcToolCopyImport->setVisible(false);
 
     //工具箱
 
@@ -5317,6 +5304,16 @@ void BsSheetFinanceWin::doSyncFindGrid()
     } else {
         mpFindGrid->item(row, sheetIdCol)->setData(Qt::DecorationRole, QVariant());
     }
+}
+
+QString BsSheetFinanceWin::saveBeforeCheck()
+{
+    QString optValue = mapOption.value("set_sheet_banlance_szd");
+    if (optValue != mapMsg.value("word_yes") && optValue != QStringLiteral("yes") ) {
+        return QString();
+    }
+    bool banlanced = mpSheetFinanceGrid->checkBanlance();
+    return (banlanced) ? QString() : QStringLiteral("借贷不平衡。");
 }
 
 }

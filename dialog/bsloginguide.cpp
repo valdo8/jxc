@@ -661,6 +661,15 @@ void BsLoginGuide::upgradeSqlCheck()
     sqls << QStringLiteral("insert or ignore into bailiOption(optcode, optname, vsetting, vdefault, vformat) values("
                            "'show_hpprice_in_sheet_grid', '单据表格显示标牌价', '否', '否', '请填“是”或“否”');");
 
+    sqls << QStringLiteral("insert or ignore into bailiOption(optcode, optname, vsetting, vdefault, vformat) values("
+                           "'set_sheet_banlance_szd', '收支单保存是否强制检查借贷平衡', '否', '否', '请填“是”或“否”');");
+
+    sqls << QStringLiteral("insert or ignore into bailiOption(optcode, optname, vsetting, vdefault, vformat) values("
+                           "'set_sheet_link_finance', '单据审核时自动进行收支记账', '否', '否', '请填“是”或“否”');");
+
+    sqls << QStringLiteral("insert or ignore into bailiOption(optcode, optname, vsetting, vdefault, vformat) values("
+                           "'set_sheet_subject_divchar', '账目名称科目分隔符', '-', '-', '请使用半角字符');");
+
     sqls << QStringLiteral("update bailiOption set vsetting='%1', vdefault='%1' "
                            "where optcode='app_image_path' and vdefault='';").arg(imageDir);
 
@@ -690,6 +699,10 @@ void BsLoginGuide::upgradeSqlCheck()
     checkFields = getExistsFieldsOfTable(QStringLiteral("subject"), defaultdb);
     if ( checkFields.indexOf(QStringLiteral("adminboss")) < 0 )
         sqls << QStringLiteral("alter table subject add column adminboss integer default 0;");
+    if ( checkFields.indexOf(QStringLiteral("refsheetin")) < 0 )
+        sqls << QStringLiteral("alter table subject add column refsheetin text default '';");
+    if ( checkFields.indexOf(QStringLiteral("refsheetex")) < 0 )
+        sqls << QStringLiteral("alter table subject add column refsheetex text default '';");
 
     checkFields = getExistsFieldsOfTable(QStringLiteral("sizertype"), defaultdb);
     if ( checkFields.indexOf(QStringLiteral("beforecolor")) < 0 )

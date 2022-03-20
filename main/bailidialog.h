@@ -7,7 +7,7 @@ namespace BailiSoft {
 
 class BsField;
 class BsFldBox;
-class BsListModel;
+class BsSqlListModel;
 
 class BsDialog : public QDialog
 {
@@ -35,7 +35,7 @@ private:
     QPushButton*        mpBtnOk;
     QPushButton*        mpBtnHelp;
 
-    QList<BsListModel*>     mAttrModels;
+    QList<BsSqlListModel*>     mAttrModels;
 };
 
 }

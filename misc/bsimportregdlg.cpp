@@ -117,6 +117,7 @@ BsImportRegDlg::BsImportRegDlg(QWidget *parent, BsRegGrid *grid) :
     setMinimumSize(750, 500);
     setSizeGripEnabled(true);
     setWindowTitle(QStringLiteral("导入"));
+    setWindowFlags(windowFlags() &~ Qt::WindowContextHelpButtonHint);
 
     //清除初始化设置
     clearCordSettings();

@@ -8,8 +8,8 @@ namespace BailiSoft {
 
 //版本号
 int lxapp_version_major = 17;
-int lxapp_version_minor = 2;
-int lxapp_version_patch = 5;
+int lxapp_version_minor = 3;
+int lxapp_version_patch = 1;
 /*
 ... 帮助文档————登记推荐实践零售与批发、本店与代销
 2.0.ok 爱美无价平台功能上线
@@ -19,6 +19,12 @@ int lxapp_version_patch = 5;
 2.3.ok 工具箱自动划价功能
 2.4.ok 复制粘贴特殊符号检查
 2.5.ok 登记资料导入向导解决了csv单元双引号内容中包括逗号
+2.6.ok 纠正了收支单删除时的一个提示错误。
+2.6.ok 单据业务统计增加了“原单号”角度字段
+2.6.ok 收支单关联单据“收付款”，同时可分微信、支付宝、拉卡
+2.7.ok 登记资料导出解决了长数字货号变成科学计数法以及前置0消失的问题
+2.8.ok 行备注字数增加到支持200字
+3.1.ok 导入CSV格式单据
 */
 
 //表基名（英）
@@ -225,7 +231,7 @@ void initMapMsg()
                   .arg(bsffInt | bsffHead | bsffAggNone | bsffPKey | bsffQryAsSel).arg(0));
 
     mapMsg.insert("fld_proof", QStringLiteral("原单号\tTEXT DEFAULT ''\t备用选填\t%1\t%2")
-                  .arg(bsffText | bsffHead | bsffAggNone).arg(20));
+                  .arg(bsffText | bsffHead | bsffAggNone | bsffQryAsSel).arg(20));
 
     mapMsg.insert("fld_dated", QStringLiteral("日期\tINTEGER DEFAULT 0\t业务发生日\t%1\t%2")
                   .arg(bsffDate | bsffHead | bsffAggNone | bsffQryAsCon | bsffQryAsSel).arg(0));
@@ -297,7 +303,7 @@ void initMapMsg()
                   .arg(bsffNumeric | bsffGrid | bsffAggSum | bsffReadOnly | bsffQryAsVal).arg(2));
 
     mapMsg.insert("fld_rowmark", QStringLiteral("行备注\tTEXT DEFAULT ''\t本行备注\t%1\t%2")
-                  .arg(bsffText | bsffGrid | bsffAggNone).arg(50));
+                  .arg(bsffText | bsffGrid | bsffAggNone).arg(200));
 
     mapMsg.insert("fld_hpmark", QStringLiteral("货备注\tTEXT DEFAULT ''\t本行货品备注\t%1\t%2")
                   .arg(bsffText | bsffGrid | bsffAggNone).arg(50));
@@ -364,6 +370,12 @@ void initMapMsg()
 
     mapMsg.insert("fld_regmark", QStringLiteral("备注\tTEXT DEFAULT ''\t备注\t%1\t%2")
                   .arg(bsffText | bsffGrid | bsffAggNone).arg(100));
+
+    mapMsg.insert("fld_refsheetin", QStringLiteral("记收单据\tTEXT DEFAULT ''\t关联业务单据金额计入本账收值\t%1\t%2")
+                  .arg(bsffText | bsffGrid | bsffAggCount | bsffQryAsSel).arg(3));
+
+    mapMsg.insert("fld_refsheetex", QStringLiteral("记支单据\tTEXT DEFAULT ''\t关联业务单据金额计入本账支值\t%1\t%2")
+                  .arg(bsffText | bsffGrid | bsffAggCount | bsffQryAsSel).arg(3));
 
     mapMsg.insert("fld_hpcode", QStringLiteral("货号\tTEXT PRIMARY KEY\t货号\t%1\t%2")
                   .arg(bsffText | bsffGrid | bsffAggNone | bsffPKey | bsffCargoRel).arg(20));
@@ -631,7 +643,7 @@ void initMapMsg()
     mapMsg.insert("tool_retmoney_calc", QStringLiteral("零售价金额演算"));
     mapMsg.insert("tool_lotmoney_calc", QStringLiteral("批发价金额演算"));
     mapMsg.insert("tool_buymoney_calc", QStringLiteral("进货价金额演算"));
-    mapMsg.insert("tool_import_batch_barcodes", QStringLiteral("批量导入条形码"));
+    mapMsg.insert("tool_import_batch_barcodes", QStringLiteral("批量导入条码"));
     mapMsg.insert("tool_auto_batch_reprice", QStringLiteral("重新整单划价"));
     mapMsg.insert("tool_print_cargo_labels", QStringLiteral("打印吊牌标签"));
     mapMsg.insert("tool_copy_import_sheet", QStringLiteral("复制导入单据"));

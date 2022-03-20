@@ -2863,6 +2863,15 @@ BsRegGrid::BsRegGrid(QWidget *parent, const QString &table, const QList<BsField*
         dsColorType->reload();
     }
 
+    //账目登记的特别设置
+    int idxRefSheetInCol = 0, idxRefSheetExCol = 0;
+    BsField *refSheetInFld = getFieldByName(QStringLiteral("refsheetin"), &idxRefSheetInCol);
+    BsField *refSheetExFld = getFieldByName(QStringLiteral("refsheetex"), &idxRefSheetExCol);
+    if ( refSheetInFld && idxRefSheetInCol > 0 && refSheetExFld && idxRefSheetExCol > 0 ) {
+        setItemDelegateForColumn(idxRefSheetInCol, new BsSheetDelegate(this, refSheetInFld));
+        setItemDelegateForColumn(idxRefSheetExCol, new BsSheetDelegate(this, refSheetExFld));
+    }
+
     //布尔列
     for ( int i = 0, iLen = flds.length(); i < iLen; ++i )
     {
@@ -2876,7 +2885,7 @@ BsRegGrid::BsRegGrid(QWidget *parent, const QString &table, const QList<BsField*
         if ( fldName.startsWith(QStringLiteral("attr")) && fldName.mid(4).toInt() > 0 ) {
             QString listSql = QStringLiteral("select vsetting from bailioption where optcode='%1_%2_list';")
                     .arg(table).arg(fldName);
-            BsListModel *attrDataSet = new BsListModel(this, listSql);
+            BsSqlListModel *attrDataSet = new BsSqlListModel(this, listSql);
             mAttrModels << attrDataSet;
             attrDataSet->reload();
             setItemDelegateForColumn(i, new BsPickDelegate(this, mCols.at(i), attrDataSet));
@@ -4022,6 +4031,21 @@ BsSheetFinanceGrid::BsSheetFinanceGrid(QWidget *parent, const QList<BsField*> &f
 BsSheetFinanceGrid::~BsSheetFinanceGrid()
 {
     delete mpDelegateSubject;
+}
+
+bool BsSheetFinanceGrid::checkBanlance()
+{
+    int idxIn = getColumnIndexByFieldName("income");
+    int idxEx = getColumnIndexByFieldName("expense");
+    double sumIn = 0, sumEx = 0;
+
+    for ( int i = 0, iLen = rowCount(); i < iLen; ++i ) {
+        sumIn += item(i, idxIn)->text().toDouble();
+        sumEx += item(i, idxEx)->text().toDouble();
+    }
+    double diff = sumIn - sumEx;
+
+    return (diff < 0.001 && diff > -0.001);
 }
 
 void BsSheetFinanceGrid::commitData(QWidget *editor)

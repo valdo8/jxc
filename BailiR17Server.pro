@@ -61,9 +61,11 @@ HEADERS += \
     dialog/bsshoplocdlg.h \
     dialog/bstagselectdlg.h \
     dialog/bspricebatch.h \
+    dialog/bsrefsheetdlg.h \
     misc/bsimportr15dlg.h \
     misc/bsimportr16dlg.h \
     misc/bsimportregdlg.h \
+    misc/bsimportsheetdlg.h \
     misc/lxbzprinter.h \
     misc/lxbzprintsetting.h \
     misc/bsoption.h \
@@ -104,12 +106,12 @@ SOURCES += main/main.cpp \
     main/bailishare.cpp \
     main/bailidialog.cpp \
     main/bsmain.cpp \
-    dialog/bsabout.cpp \
     tools/bsbarcodemaker.cpp \
     tools/bsbatchrename.cpp \
     tools/bsbatchrecheck.cpp \
     tools/bslabeldesigner.cpp \
     tools/bstoolstockreset.cpp \
+    dialog/bsabout.cpp \
     dialog/bsnetloading.cpp \
     dialog/bspapersizedlg.cpp \
     dialog/bsbarcodesimportdlg.cpp \
@@ -125,9 +127,11 @@ SOURCES += main/main.cpp \
     dialog/bsshoplocdlg.cpp \
     dialog/bstagselectdlg.cpp \
     dialog/bspricebatch.cpp \
+    dialog/bsrefsheetdlg.cpp \
     misc/bsimportr15dlg.cpp \
     misc/bsimportr16dlg.cpp \
     misc/bsimportregdlg.cpp \
+    misc/bsimportsheetdlg.cpp \
     misc/lxbzprinter.cpp \
     misc/lxbzprintsetting.cpp \
     misc/bsoption.cpp \

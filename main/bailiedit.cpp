@@ -556,6 +556,66 @@ void BsPickDelegate::setModelData(QWidget *editor, QAbstractItemModel *model, co
 }
 
 
+// BsSheetDelegate
+namespace BailiSoft {
+
+BsSheetDelegate::BsSheetDelegate(QObject *parent, BsField *field)
+    : QStyledItemDelegate(parent), mpField(field)
+{
+    //Nothing
+}
+
+QWidget *BsSheetDelegate::createEditor(QWidget *parent, const QStyleOptionViewItem &, const QModelIndex &) const
+{
+    QComboBox *edt = new QComboBox(parent);
+    for ( int i = 0, iLen = lstSheetWinTableNames.length(); i < iLen; ++i ) {
+        edt->addItem(lstSheetWinTableCNames.at(i), lstSheetWinTableNames.at(i));
+    }
+    return edt;
+}
+
+void BsSheetDelegate::setEditorData(QWidget *editor, const QModelIndex &index) const
+{
+    QComboBox *edt = qobject_cast<QComboBox *>(editor);
+    int idx = edt->findData(index.model()->data(index));
+    edt->setCurrentIndex(idx);
+}
+
+void BsSheetDelegate::setModelData(QWidget *editor, QAbstractItemModel *model, const QModelIndex &index) const
+{
+    QComboBox *edt = qobject_cast<QComboBox *>(editor);
+    model->setData(index, edt->currentData());
+}
+
+void BsSheetDelegate::paint(QPainter *painter, const QStyleOptionViewItem &option, const QModelIndex &index) const
+{
+    QString data = index.model()->data(index).toString();
+    int idx = lstSheetWinTableNames.indexOf(data);
+    QString text = (idx >= 0) ? lstSheetWinTableCNames.at(idx) : QString();
+
+    QStyleOptionViewItem opt = option;
+    opt.text = QString();
+    const QWidget *widget = opt.widget;
+    QStyle *style = widget ? widget->style() : QApplication::style();
+    style->drawControl(QStyle::CE_ItemViewItem, &opt, painter, widget);
+
+    QModelIndex mdx = index.model()->index(index.row(), 0);
+    uint state = index.model()->data(mdx, Qt::UserRole + OFFSET_EDIT_STATE).toUInt();
+    if (state == bsesNew) {
+        painter->setPen(QPen(Qt::darkGreen));
+    }
+    if (state == bsesUpdated) {
+        painter->setPen(QPen(Qt::blue));
+    }
+    if (state == bsesDeleted) {
+        painter->setPen(QPen(Qt::red));
+    }
+    painter->drawText(option.rect.adjusted(3, 0, -3, 0), Qt::AlignLeft | Qt::AlignVCenter, text);
+}
+
+}
+
+
 // BsCheckDelegate
 namespace BailiSoft {
 

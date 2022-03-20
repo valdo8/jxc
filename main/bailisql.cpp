@@ -115,6 +115,12 @@ QStringList createSysRelTableSql(const QString &bookName, const bool forImport)
     ls << QStringLiteral("insert into bailiOption(optcode, optname, vsetting, vdefault, vformat) values("
                          "'dots_of_money', '金额小数位数', '2', '2', '0~4位');");
 
+    ls << QStringLiteral("insert into bailiOption(optcode, optname, vsetting, vdefault, vformat) values("
+                         "'set_sheet_banlance_szd', '收支单保存是否强制检查借贷平衡', '否', '否', '请填“是”或“否”');");
+    ls << QStringLiteral("insert into bailiOption(optcode, optname, vsetting, vdefault, vformat) values("
+                         "'set_sheet_link_finance', '单据审核时自动进行收支记账', '否', '否', '请填“是”或“否”');");
+    ls << QStringLiteral("insert into bailiOption(optcode, optname, vsetting, vdefault, vformat) values("
+                         "'set_sheet_subject_divchar', '账目名称科目分隔符', '-', '-', '请使用半角字符');");
 
     ls << QStringLiteral("insert into bailiOption(optcode, optname, vsetting, vdefault, vformat) values("
                          "'sheet_hpmark_define', '货备注列默认填充值', '0', '0', '填数字1~6以代表货品自定义分类第几列。无效值表示不需要货备注列。');");
@@ -777,7 +783,8 @@ QStringList sqliteInitSqls(const QString &bookName, const bool forImport)
     sqls << createRegTableSql("cargo", flds);
 
     flds.clear();
-    flds << "kname" << "attr1" << "attr2" << "attr3" << "attr4" << "attr5" << "attr6" << "adminboss" << "upman" << "uptime";
+    flds << "kname" << "attr1" << "attr2" << "attr3" << "attr4" << "attr5" << "attr6" << "refsheetin" << "refsheetex"
+         << "adminboss" << "upman" << "uptime";
     sqls << createRegTableSql("subject", flds);
 
     flds.clear();

@@ -4,6 +4,7 @@
 #include "bailigrid.h"
 #include "bailicustom.h"
 #include "comm/pinyincode.h"
+#include "dialog/bsrefsheetdlg.h"
 
 
 // BsSizerModel
@@ -329,10 +330,10 @@ QString BsColorListModel::getFirstColorByType(const QString &colorType)
 }
 
 
-// BsListModel
+// BsSqlListModel
 namespace BailiSoft {
 
-BsListModel::BsListModel(QWidget *parent, const QString &sql, const bool commaList)
+BsSqlListModel::BsSqlListModel(QWidget *parent, const QString &sql, const bool commaList)
     : BsAbstractModel(parent), mSql(sql), mCommaList(commaList)
 {
     //Nothing required here
@@ -340,13 +341,13 @@ BsListModel::BsListModel(QWidget *parent, const QString &sql, const bool commaLi
     //sql必须是返回一行一列的逗号分隔字符串，参见reload()
 }
 
-int BsListModel::rowCount(const QModelIndex &parent) const
+int BsSqlListModel::rowCount(const QModelIndex &parent) const
 {
     Q_UNUSED(parent)
     return mValues.count();
 }
 
-QVariant BsListModel::data(const QModelIndex &index, int role) const
+QVariant BsSqlListModel::data(const QModelIndex &index, int role) const
 {
     if ( role == Qt::DisplayRole || role == Qt::EditRole ) {
         //popup show
@@ -361,7 +362,7 @@ QVariant BsListModel::data(const QModelIndex &index, int role) const
     return QVariant();
 }
 
-void BsListModel::reload()
+void BsSqlListModel::reload()
 {
     beginResetModel();
 
@@ -629,6 +630,179 @@ QString BsSqlModel::getValue(const QString &keyValue, const QString &fldName)
 }
 
 
+// BsFinRel
+namespace BailiSoft {
+
+BsFinRel::BsFinRel()
+{
+    reload();
+}
+
+void BsFinRel::reload()
+{
+    mapDefine.clear();
+
+    QString sql;
+    QSqlQuery qry;
+    qry.setForwardOnly(true);
+
+    for ( int i = 0, iLen = lstSheetWinTableNames.length(); i < iLen; ++i ) {
+
+        QString sheet = lstSheetWinTableNames.at(i);
+        QStringList ins, exs;
+
+        sql = QStringLiteral("select kname from subject where refsheetin='%1' order by kname;").arg(sheet);
+        qry.exec(sql);
+        while (qry.next()) {
+            ins << qry.value(0).toString();
+        }
+
+        sql = QStringLiteral("select kname from subject where refsheetex='%1' order by kname;").arg(sheet);
+        qry.exec(sql);
+        while (qry.next()) {
+            exs << qry.value(0).toString();
+        }
+
+        mapDefine.insert(sheet, qMakePair(ins, exs));
+    }
+
+    sql = QStringLiteral("select vsetting from bailioption where optcode='set_sheet_subject_divchar';");
+    qry.exec(sql);
+    if (qry.next()) {
+        QString optValue = qry.value(0).toString();
+        mDivChar = (optValue.length() > 0) ? optValue.at(0) : QChar('-');
+    } else {
+        mDivChar = QChar('-');
+    }
+}
+
+bool BsFinRel::linkDefineNothing(const QString &sheet)
+{
+    QPair<QStringList, QStringList> p = mapDefine.value(sheet);
+    return p.first.isEmpty() && p.second.isEmpty();
+}
+
+bool BsFinRel::linkDefineInvalidd(const QString &sheet)
+{
+    QPair<QStringList, QStringList> p = mapDefine.value(sheet);
+    return (p.first.length() > 1 && p.second.length() > 1) || p.first.isEmpty() || p.second.isEmpty();
+}
+
+bool BsFinRel::getDialogAssign(const QString &sheet, const qint64 amount, QWidget *winParent)
+{
+    mInVals.clear();
+    mExVals.clear();
+
+    QPair<QStringList, QStringList> p = mapDefine.value(sheet);
+
+    if (p.first.length() > 1 || p.second.length() > 1) {
+
+        QStringList longNames = (p.first.length() > 1) ? p.first : p.second;
+        QStringList shortNames;
+        for ( int i = 0, iLen = longNames.length(); i < iLen; ++i ) {
+            QStringList secs = QString(longNames.at(i)).split(mDivChar);
+            shortNames << secs.at(secs.length() - 1);
+        }
+
+        BsRefSheetDlg dlg(amount, shortNames, winParent);
+        if (dlg.exec() == QDialog::Accepted) {
+            if (p.first.length() > 1) {
+                mInVals << dlg.mAssigns;
+            } else {
+                mExVals << dlg.mAssigns;
+            }
+        } else {
+            return false;
+        }
+    }
+
+    if (p.first.length() == 1) {
+        mInVals << amount;
+    }
+
+    if (p.second.length() == 1) {
+        mExVals << amount;
+    }
+
+    return true;
+}
+
+bool BsFinRel::checkValuesAssign(const QString &sheet, QList<qint64> inValues, QList<qint64> exValues)
+{
+    mInVals.clear();
+    mExVals.clear();
+
+    QPair<QStringList, QStringList> p = mapDefine.value(sheet);
+
+    if ( p.first.length() != inValues.length() || p.second.length() != exValues.length() ) {
+        return false;
+    }
+
+    mInVals << inValues;
+    mExVals << exValues;
+
+    return true;
+}
+
+QStringList BsFinRel::qryBatchSqls(const QString &sheet, const qint64 dated, const QString &proof,
+                                   const QString &shop, const QString &trader)
+{
+    QPair<QStringList, QStringList> p = mapDefine.value(sheet);
+
+    //新单据号
+    int sheetId = 1;
+    QSqlQuery qry;
+    qry.exec(QStringLiteral("SELECT seq FROM sqlite_sequence WHERE name='szd';"));
+    if ( qry.next() ) sheetId = qry.value(0).toInt() + 1;
+    qry.finish();
+
+    //sqls
+    QStringList batches;
+
+    int rowTime = QDateTime::currentMSecsSinceEpoch();
+    for ( int i = 0, iLen = p.first.length(); i < iLen; ++i ) {
+        if ( mInVals.at(i) != 0 ) {
+            rowTime++;
+            QString sql = QStringLiteral("insert into szddtl(parentid, rowtime, subject, income, expense) "
+                                         "values(%1, %2, '%3', %4, 0);")
+                    .arg(sheetId)
+                    .arg(rowTime)
+                    .arg(p.first.at(i))
+                    .arg(mInVals.at(i));
+            batches << sql;
+        }
+    }
+
+    for ( int i = 0, iLen = p.second.length(); i < iLen; ++i ) {
+        if ( mExVals.at(i) != 0 ) {
+            rowTime++;
+            QString sql = QStringLiteral("insert into szddtl(parentid, rowtime, subject, income, expense) "
+                                         "values(%1, %2, '%3', 0, %4);")
+                    .arg(sheetId)
+                    .arg(rowTime)
+                    .arg(p.second.at(i))
+                    .arg(mExVals.at(i));
+            batches << sql;
+        }
+    }
+
+    QString sql = QStringLiteral("insert into szd(sheetid, proof, dated, shop, trader, upman, uptime) "
+                                 "values(%1, '%2', %3, '%4', '%5', 'system', %6);")
+            .arg(sheetId)
+            .arg(proof)
+            .arg(dated)
+            .arg(shop)
+            .arg(trader)
+            .arg(QDateTime::currentSecsSinceEpoch());
+    batches << sql;
+
+    return batches;
+}
+
+
+}
+
+
 // init
 namespace BailiSoft {
 
@@ -776,6 +950,7 @@ int loginLoadOptions()
                            << QStringLiteral("monthd")
                            << QStringLiteral("dated")
                            << QStringLiteral("sheetid")
+                           << QStringLiteral("proof")
                            << QStringLiteral("stype")
                            << QStringLiteral("staff")
                            << QStringLiteral("shop")
@@ -807,10 +982,13 @@ int loginLoadOptions()
                            << QStringLiteral("monthd")
                            << QStringLiteral("dated")
                            << QStringLiteral("sheetid")
+                           << QStringLiteral("proof")
                            << QStringLiteral("stype")
                            << QStringLiteral("staff")
                            << QStringLiteral("shop")
                            << QStringLiteral("trader")
+                           << QStringLiteral("refsheetin")
+                           << QStringLiteral("refsheetex")
                            << QStringLiteral("subject");
     for ( int i = 1; i <= 6; ++i ) {
         QString attrx = QStringLiteral("attr%1").arg(i);
@@ -993,6 +1171,13 @@ int loginLoadRegis()
         dsSupplier = new BsRegModel(QStringLiteral("supplier"), ls);
     }
 
+    //finRel
+    if ( finRel ) {
+        finRel->reload();
+    } else {
+        finRel = new BsFinRel();
+    }
+
     //return
     return 0;
 }
@@ -1032,6 +1217,7 @@ BsRegModel*                     dsSubject   = nullptr;
 BsRegModel*                     dsShop      = nullptr;
 BsRegModel*                     dsCustomer  = nullptr;
 BsRegModel*                     dsSupplier  = nullptr;
+BsFinRel*                       finRel      = nullptr;
 
 QMap<QString, QString>                  mapOption;
 QMap<QString, QString>                  mapFldUserSetName;

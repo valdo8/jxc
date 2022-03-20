@@ -1448,7 +1448,7 @@ QString BsTerminator::reqBizInsert(const QString &packstr, const BsFronter *user
 {
 /*  【REQUEST】
         2：单据主表名
-        3：主表值...(\t)         约定字段：shop,trader,stype,staff,remark,actpay
+        3：主表值...(\t)         约定字段：shop,trader,stype,staff,remark,actpay[,ShouzhiFinaceAssigns]
         4：从表值行...(\t\n)     约定字段：cargo,color,sizer,qty,price,rowmark
 
     【RESPONSE】
@@ -1653,8 +1653,8 @@ QString BsTerminator::reqBizInsert(const QString &packstr, const BsFronter *user
     batches << QStringLiteral("insert into %1(%2) values(%3);")
             .arg(tname).arg(mfields).arg(mvalues.join(QChar(',')));
 
-    //特殊调用
-    if ( updSheetId ) {
+    //针对reqBizEdit的特殊调用传递的特殊参数
+    if ( updSheetId > 0 ) {
         batches.prepend(QString::number(uptimeValue));
         batches.prepend(QString::number(actpayValue));
         batches.prepend(QString::number(dmnySum));
@@ -1662,7 +1662,33 @@ QString BsTerminator::reqBizInsert(const QString &packstr, const BsFronter *user
         batches.prepend(traderValue);
         batches.prepend(shopValue);
         batches.prepend(QStringLiteral("OK"));
-        return batches.join(QChar('\f'));
+        return batches.join(QChar('\f'));       //由reqBizEdit二次处理
+    }
+
+    //收支自动记账
+    if ( mRawValues.length() >= 7 ) {
+        QStringList ps = QString(mRawValues.at(6)).split(QChar('|'));
+        if ( ps.length() == 2 && !finRel->linkDefineNothing(tname) && !finRel->linkDefineInvalidd(tname) ) {
+            QStringList ins = QString(ps.at(0)).split(QChar(':'));
+            QStringList exs = QString(ps.at(1)).split(QChar(':'));
+            QList<qint64> inv, exv;
+            qint64 inSum = 0, exSum = 0;
+            for ( int i = 0, iLen = ins.length(); i < iLen; ++i ) {
+                inSum += QString(ins.at(i)).toLongLong();
+                inv << QString(ins.at(i)).toLongLong();
+            }
+            for ( int i = 0, iLen = exs.length(); i < iLen; ++i ) {
+                exSum += QString(exs.at(i)).toLongLong();
+                exv << QString(exs.at(i)).toLongLong();
+            }
+            if (inSum == exSum && finRel->checkValuesAssign(tname, inv, exv)) {
+                QString proof = QStringLiteral("%1-%2").arg(tname.toUpper()).arg(sheetId, 8, 10, QChar('0'));
+                batches << finRel->qryBatchSqls(tname, datedValue, proof, shopValue, traderValue);
+            } else {
+                respList << QStringLiteral("Auto tally failed.");
+                return respList.join(QChar('\f'));
+            }
+        }
     }
 
     //执行

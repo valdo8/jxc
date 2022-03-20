@@ -21,7 +21,7 @@ namespace BailiSoft {
 
 class BsWin;
 class BsGrid;
-class BsListModel;
+class BsSqlListModel;
 class BsPickDelegate;
 
 //提交表格时，【数据类型】和【统计类型】是最基本、必须提供的flag，特此说明。
@@ -430,7 +430,7 @@ protected:
     QStringList getSqliteLimitKeyFields(const bool forNew);
     QStringList getSqliteLimitKeyValues(const int row, const bool forNew);
 private:
-    QList<BsListModel*>     mAttrModels;
+    QList<BsSqlListModel*>     mAttrModels;
 };
 
 
@@ -521,6 +521,7 @@ class BsSheetFinanceGrid : public BsSheetGrid
 public:
     explicit BsSheetFinanceGrid(QWidget *parent, const QList<BsField*> &flds);
     ~BsSheetFinanceGrid();
+    bool checkBanlance();
 protected:
     void commitData(QWidget *editor);
 private:

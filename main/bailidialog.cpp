@@ -48,7 +48,7 @@ BsDialog::BsDialog(QWidget *parent, const bool addMode, const QString &table, co
             if ( fldName.startsWith(QStringLiteral("attr")) && fldName.mid(4).toInt() > 0 ) {
                 QString listSql = QStringLiteral("select vsetting from bailioption where optcode='%1_%2_list';")
                         .arg(table).arg(fldName);
-                BsListModel *ds = new BsListModel(this, listSql);
+                BsSqlListModel *ds = new BsSqlListModel(this, listSql);
                 ds->reload();
                 dropModel = ds;
                 mAttrModels << ds;

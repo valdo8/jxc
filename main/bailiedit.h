@@ -184,6 +184,26 @@ private:
 }
 
 
+// BsSheetDelegate
+namespace BailiSoft {
+
+class BsSheetDelegate : public QStyledItemDelegate
+{
+    Q_OBJECT
+public:
+    explicit BsSheetDelegate(QObject *parent, BsField* field);
+    QWidget *createEditor(QWidget *parent, const QStyleOptionViewItem &, const QModelIndex &) const;
+    void setEditorData(QWidget *editor, const QModelIndex &index) const;
+    void setModelData(QWidget *editor, QAbstractItemModel *model, const QModelIndex &index) const;
+    void paint(QPainter *painter, const QStyleOptionViewItem &option, const QModelIndex &index) const;
+
+private:
+    BsField             *mpField;
+};
+
+}
+
+
 // BsCheckDelegate
 namespace BailiSoft {
 

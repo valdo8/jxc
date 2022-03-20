@@ -29,6 +29,7 @@ protected:
     void keyPressEvent(QKeyEvent *e);
 
 private slots:
+    void tableIndexChanged(int);
     void checkReady();
     void doExec();
 };
