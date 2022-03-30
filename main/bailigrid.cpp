@@ -3023,21 +3023,46 @@ void BsSheetGrid::openBySheetId(const int sheetId)
     //重要前提先设参数
     mSheetId = sheetId;
 
-    //加载数据
-    QStringList sels;
-    for (int i = 0, iLen = mCols.length(); i < iLen; ++i )
-    {
-        if ( (mCols.at(i)->mFlags & bsffSizeUnit) != bsffSizeUnit ) {
-            if ( (mCols.at(i)->mFlags & bsffLookup) == bsffLookup ) {
-                sels << QStringLiteral("'' as %1").arg(mCols.at(i)->mFldName);
-            } else {
+    //是否有lookup字段
+    bool containsLookup = false;
+    for (int i = 0, iLen = mCols.length(); i < iLen; ++i ) {
+        if ( ( (mCols.at(i)->mFlags & bsffSizeUnit) != bsffSizeUnit ) &&
+             ( (mCols.at(i)->mFlags & bsffLookup) == bsffLookup ) ) {
+                containsLookup = true;
+                break;
+        }
+    }
+
+    //sql
+    QString sql;
+    if (containsLookup) {
+        QStringList sels;
+        for (int i = 0, iLen = mCols.length(); i < iLen; ++i )
+        {
+            if ( (mCols.at(i)->mFlags & bsffSizeUnit) != bsffSizeUnit ) {
+                if ( (mCols.at(i)->mFlags & bsffLookup) == bsffLookup ) {
+                    sels << QStringLiteral("b.%1").arg(mCols.at(i)->mFldName);
+                } else {
+                    sels << QStringLiteral("a.%1").arg(mCols.at(i)->mFldName);
+                }
+            }
+        }
+        sql = QStringLiteral("SELECT %1 FROM %2dtl a LEFT JOIN cargo b ON a.cargo=b.hpcode "
+                             "WHERE a.parentid=%3 ORDER BY a.rowtime;")
+                .arg(sels.join(QChar(44))).arg(mTable).arg(sheetId);
+    }
+    else {
+        QStringList sels;
+        for (int i = 0, iLen = mCols.length(); i < iLen; ++i ) {
+            if ( (mCols.at(i)->mFlags & bsffSizeUnit) != bsffSizeUnit ) {
                 sels << mCols.at(i)->mFldName;
             }
         }
+        sql = QStringLiteral("SELECT %1 FROM %2dtl WHERE parentid=%3 ORDER BY rowtime;")
+                .arg(sels.join(QChar(44))).arg(mTable).arg(sheetId);
     }
-    QString sql;
-    sql = QStringLiteral("SELECT %1 FROM %2dtl WHERE parentid=%3 ORDER BY rowtime;")
-            .arg(sels.join(QChar(44))).arg(mTable).arg(mSheetId);   //sheetId为负数，自然会返回空数据集
+
+    //load sql
     loadData(sql);
 
     //加载列宽

@@ -9,7 +9,7 @@ namespace BailiSoft {
 //版本号
 int lxapp_version_major = 17;
 int lxapp_version_minor = 3;
-int lxapp_version_patch = 1;
+int lxapp_version_patch = 2;
 /*
 ... 帮助文档————登记推荐实践零售与批发、本店与代销
 2.0.ok 爱美无价平台功能上线
@@ -25,6 +25,7 @@ int lxapp_version_patch = 1;
 2.7.ok 登记资料导出解决了长数字货号变成科学计数法以及前置0消失的问题
 2.8.ok 行备注字数增加到支持200字
 3.1.ok 导入CSV格式单据
+3.2.ok 前端录入单据标牌价未显示
 */
 
 //表基名（英）
