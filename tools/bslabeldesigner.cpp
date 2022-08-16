@@ -92,6 +92,9 @@ BsLabelDesigner::BsLabelDesigner(QWidget *parent, const QString &winName) : QWid
     layForm->addSpacing(9);
     layForm->addWidget(new QLabel(QStringLiteral("使用打印机："), this));
     layForm->addWidget(mpFldPrinterName);
+
+
+
     layForm->addSpacing(9);
     layForm->addWidget(new QLabel(QStringLiteral("基点偏移横向："), this));
     layForm->addWidget(mpFldFromX);

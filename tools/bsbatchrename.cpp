@@ -84,7 +84,7 @@ void BsBatchRename::checkReady()
 
 void BsBatchRename::doExec()
 {
-    bool needConCargo = ( mpRegTable->currentIndex() >= 5 );
+    bool needConCargo = ( mpRegTable->currentIndex() == 6 );
 
     mpConCargo->setVisible(needConCargo);
     mpLblConCargo->setVisible(needConCargo);

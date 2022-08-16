@@ -29,85 +29,7 @@ BsImportR15Dlg::BsImportR15Dlg(QWidget *parent, const QString &accessFile)
     : QDialog(parent), mAccessFile(accessFile), mAccessConn("MSAccessImportR15Conn"),
       mSqliteConn("SqliteImportR15Conn")
 {
-    //测试信息面板
-    mpPnlExpTest = new QWidget(this);
-    QVBoxLayout *layExpTest = new QVBoxLayout(mpPnlExpTest);
-
-    mpLblExpTest = new QLabel(this);
-
-    mpBtnExpApply = new QPushButton(QStringLiteral("填充货号设置"), this);
-    mpBtnExpApply->setFixedWidth(120);
-    connect(mpBtnExpApply, SIGNAL(clicked(bool)), this, SLOT(applyRegExp()));
-
-    layExpTest->addWidget(mpLblExpTest);
-    layExpTest->addWidget(mpBtnExpApply, 0, Qt::AlignCenter);
-    layExpTest->addStretch();
-
-    mpLblHelp = new QLabel(this);
-    mpLblHelp->setText(QStringLiteral(IMPORT_HELP));
-    mpLblHelp->setWordWrap(true);
-
-    //
-    mpChkOnlyStock = new QCheckBox(QStringLiteral("无库存不导入"), this);
-    mpChkColorFormat = new QCheckBox(QStringLiteral("不合并色系"), this);
-    QGroupBox *grpCheck = new QGroupBox(QStringLiteral("简化导入"), this);
-    QHBoxLayout *layCheck = new QHBoxLayout(grpCheck);
-    layCheck->setContentsMargins(32, 0, 32, 8);
-    layCheck->addWidget(mpChkOnlyStock);
-    layCheck->addSpacing(64);
-    layCheck->addWidget(mpChkColorFormat);
-
-    QWidget *pnlInfo = new QWidget(this);
-    QVBoxLayout *layInfo = new QVBoxLayout(pnlInfo);
-    layInfo->addWidget(mpPnlExpTest, 0, Qt::AlignCenter);
-    layInfo->addWidget(mpLblHelp, 1);
-    layInfo->addWidget(grpCheck, 0, Qt::AlignCenter);
-
-    //尺码表
-    mpGrdSizer = new BsR15UpgSetGrid(this);
-    mpGrdSizer->setColumnCount(3);
-    mpGrdSizer->setStatusTip(QStringLiteral("需要完成<b>品类名</b>设置。<br/><br/>") + QStringLiteral(REGEXP_HELP));
-    mpGrdSizer->installEventFilter(this);
-    connect(mpGrdSizer, SIGNAL(currentCellChanged(int,int,int,int)), this, SLOT(regExpChanged(int,int,int,int)));
-    mpGrdSizer->setHorizontalHeaderLabels(QStringList()
-                                          << QStringLiteral("尺码表")
-                                          << QStringLiteral("品类名")
-                                          << QStringLiteral("货号特征（正则表达式）"));
-
-    //色号表
-    mpGrdColor = new BsR15UpgColorGrid(this);
-    mpGrdColor->setColumnCount(3);
-    mpGrdColor->setStatusTip(QStringLiteral("需要完成<b>色系名</b>设置。但先要将下面色号拖上来，分好系列。"
-                                            "<br/><br/>") + QStringLiteral(REGEXP_HELP));
-    mpGrdColor->installEventFilter(this);
-    connect(mpGrdColor, SIGNAL(currentCellChanged(int,int,int,int)), this, SLOT(regExpChanged(int,int,int,int)));
-    mpGrdColor->setHorizontalHeaderLabels(QStringList()
-                                          << QStringLiteral("色号表")
-                                          << QStringLiteral("色系名")
-                                          << QStringLiteral("货号特征（正则表达式）"));
-
-    //全部色号
-    mpLstColor = new BsR15UpgColorList(this);
-    mpLstColor->setStatusTip(QStringLiteral(COLOR_DRAG_HELP));
-    mpLstColor->installEventFilter(this);
-
-    //尺码匹配导入按钮
-    QPushButton *btnLoadSizeType = new QPushButton(QStringLiteral("导入尺码匹配表"), this);
-    connect(btnLoadSizeType, &QPushButton::clicked, this, &BsImportR15Dlg::loadSizeTypeCordFile);
-
-    QHBoxLayout *layColor = new QHBoxLayout;
-    layColor->addWidget(mpLstColor, 1);
-    layColor->addWidget(pnlInfo, 2);
-
-    //左布局
-    QVBoxLayout *layLeft = new QVBoxLayout;
-    layLeft->setContentsMargins(10, 10, 10, 10);
-    layLeft->addWidget(mpGrdSizer, 1);
-    layLeft->addWidget(btnLoadSizeType, 0, Qt::AlignCenter);
-    layLeft->addWidget(mpGrdColor, 2);
-    layLeft->addLayout(layColor, 2);
-
-    //货品
+    //全部待处理货号
     mpGrdCargo = new QTableWidget(this);
     mpGrdCargo->setColumnCount(3);
     mpGrdCargo->setSelectionBehavior(QAbstractItemView::SelectItems);
@@ -121,9 +43,59 @@ BsImportR15Dlg::BsImportR15Dlg(QWidget *parent, const QString &accessFile)
     mpGrdCargo->setStatusTip(QStringLiteral("需要完成<b>码类</b>与<b>色系</b>设置。提示：利用左边色码两表的正则表达式测试功能可加速完成。"));
     mpGrdCargo->installEventFilter(this);
 
-    //正则表达式测试按钮
-    mpBtnExpTest = new QPushButton(QStringLiteral("测试"), this);
-    connect(mpBtnExpTest, SIGNAL(clicked(bool)), this, SLOT(testRegExp()));
+    mpChkOnlyStock = new QCheckBox(QStringLiteral("无库存不导入"), this);
+
+    mpBtnExpApply = new QPushButton(QStringLiteral("填入测试品类"), this);
+    mpBtnExpApply->setFixedWidth(120);
+    mpBtnExpApply->setEnabled(false);
+    connect(mpBtnExpApply, SIGNAL(clicked(bool)), this, SLOT(applyRegExp()));
+
+    QVBoxLayout *layPnlCargo = new QVBoxLayout;
+    layPnlCargo->setContentsMargins(10, 10, 10, 10);
+    layPnlCargo->addWidget(mpChkOnlyStock, 0, Qt::AlignCenter);
+    layPnlCargo->addWidget(mpGrdCargo, 1);
+    layPnlCargo->addWidget(mpBtnExpApply, 0, Qt::AlignCenter);
+
+    //尺码设置
+    mpGrdSizer = new BsR15UpgSetGrid(this);
+    mpGrdSizer->setColumnCount(3);
+    mpGrdSizer->setStatusTip(QStringLiteral("需要完成<b>品类名</b>设置。<br/><br/>") + QStringLiteral(REGEXP_HELP));
+    mpGrdSizer->installEventFilter(this);
+    connect(mpGrdSizer, SIGNAL(currentCellChanged(int,int,int,int)), this, SLOT(regExpChanged(int,int,int,int)));
+    mpGrdSizer->setHorizontalHeaderLabels(QStringList()
+                                          << QStringLiteral("尺码表")
+                                          << QStringLiteral("品类名")
+                                          << QStringLiteral("货号特征（正则表达式）"));
+
+    QPushButton *btnLoadSizeType = new QPushButton(QStringLiteral("导入品类匹配"), this);
+    btnLoadSizeType->setFixedWidth(120);
+    connect(btnLoadSizeType, &QPushButton::clicked, this, &BsImportR15Dlg::loadSizeTypeCordFile);
+
+    //色号设置
+    mpGrdColor = new BsR15UpgColorGrid(this);
+    mpGrdColor->setColumnCount(3);
+    mpGrdColor->setStatusTip(QStringLiteral("需要完成<b>色系名</b>设置。但先要将下面色号拖上来，分好系列。"
+                                            "<br/><br/>") + QStringLiteral(REGEXP_HELP));
+    mpGrdColor->installEventFilter(this);
+    connect(mpGrdColor, SIGNAL(currentCellChanged(int,int,int,int)), this, SLOT(regExpChanged(int,int,int,int)));
+    mpGrdColor->setHorizontalHeaderLabels(QStringList()
+                                          << QStringLiteral("色号表")
+                                          << QStringLiteral("色系名")
+                                          << QStringLiteral("货号特征（正则表达式）"));
+
+    mpChkColorFormat = new QCheckBox(QStringLiteral("不合并色系（通常应该选此，除非色号很少）"), this);
+
+    mpLstColor = new BsR15UpgColorList(this);
+    mpLstColor->setStatusTip(QStringLiteral(COLOR_DRAG_HELP));
+    mpLstColor->installEventFilter(this);
+
+    mpLblHelp = new QLabel(this);
+    mpLblHelp->setText(QStringLiteral(IMPORT_HELP));
+    mpLblHelp->setWordWrap(true);
+
+    QHBoxLayout *layColor = new QHBoxLayout;
+    layColor->addWidget(mpLstColor, 1);
+    layColor->addWidget(mpLblHelp, 2);
 
     //确定取消
     QDialogButtonBox *pBox = new QDialogButtonBox(this);
@@ -141,20 +113,32 @@ BsImportR15Dlg::BsImportR15Dlg(QWidget *parent, const QString &accessFile)
     pBtnCancel->setIconSize(QSize(24, 24));
     connect(pBtnCancel, SIGNAL(clicked()), this, SLOT(reject()));
 
-    QVBoxLayout *layRight = new QVBoxLayout;
-    layRight->setContentsMargins(0, 10, 0, 10);
-    layRight->addWidget(mpGrdCargo, 1);
-    layRight->addWidget(pBox);
+    //左布局
+    QVBoxLayout *layPnlCords = new QVBoxLayout;
+    layPnlCords->setContentsMargins(0, 10, 0, 10);
+    layPnlCords->addWidget(mpGrdSizer, 1);
+    layPnlCords->addWidget(btnLoadSizeType, 0, Qt::AlignCenter);
+    layPnlCords->addSpacing(12);
+    layPnlCords->addWidget(mpGrdColor, 2);
+    layPnlCords->addWidget(mpChkColorFormat, 0, Qt::AlignCenter);
+    layPnlCords->addSpacing(12);
+    layPnlCords->addLayout(layColor, 2);
+    layPnlCords->addSpacing(12);
+    layPnlCords->addWidget(pBox, 0, Qt::AlignCenter);
 
     //布局
     QHBoxLayout *lay = new QHBoxLayout(this);
     lay->setContentsMargins(0, 0, 0, 0);
-    lay->addLayout(layLeft, 2);
-    lay->addLayout(layRight, 1);
+    lay->addLayout(layPnlCargo, 1);
+    lay->addLayout(layPnlCords, 2);
     lay->addWidget(new QSizeGrip(this), 0, Qt::AlignBottom | Qt::AlignRight);
 
+    //正则表达式测试按钮（浮动显示）
+    mpBtnExpTest = new QPushButton(QStringLiteral("测试"), this);
+    connect(mpBtnExpTest, SIGNAL(clicked(bool)), this, SLOT(testRegExp()));
+
     //窗口
-    setMinimumSize(900, 600);
+    setMinimumSize(1000, 600);
     setWindowTitle(QStringLiteral("R15数据升迁工具"));
     setWindowFlags(windowFlags() &~ Qt::WindowContextHelpButtonHint);
 
@@ -177,10 +161,7 @@ bool BsImportR15Dlg::eventFilter(QObject *watched, QEvent *event)
         QWidget *w = qobject_cast<QWidget*>(watched);
         QStatusTipEvent *e = static_cast<QStatusTipEvent*>(event);
         if ( w && e ) {
-            if ( mpPnlExpTest->isVisible() )
-                mpLblHelp->setText(QString());
-            else
-                mpLblHelp->setText(e->tip());
+            mpLblHelp->setText(e->tip());
             return true;
         }
     }
@@ -390,6 +371,7 @@ void BsImportR15Dlg::reloadOldBookData()
     mpLstColor->addItems(colors);
 
     //货号
+    QSet<QString> setCargos;
     mpGrdCargo->clearContents();
     mpGrdCargo->setRowCount(0);
     mpGrdCargo->horizontalHeader()->setSectionResizeMode(0, QHeaderView::Fixed);
@@ -404,7 +386,6 @@ void BsImportR15Dlg::reloadOldBookData()
     if ( qry.lastError().isValid() ) qDebug() << qry.lastError().text() << sql;
     rows = 0;
     while ( qry.next() ) {
-        //qDebug() << "cargo:" << qry.value(0).toString() << "  cgName:" << qry.value(1).toString() << "  attr6:" << qry.value(7).toString();
         QString cargo = qry.value(0).toString().trimmed();
         if ( !cargo.isEmpty() ) {
             mpGrdCargo->setRowCount(++rows);
@@ -421,12 +402,59 @@ void BsImportR15Dlg::reloadOldBookData()
             mpGrdCargo->setItem(rows - 1, 0, itCargo);
             mpGrdCargo->setItem(rows - 1, 1, new QTableWidgetItem());
             mpGrdCargo->setItem(rows - 1, 2, new QTableWidgetItem());
+            setCargos.insert(cargo);
         }
     }
+
+    //补充总库存为零但各店或各色仍然有的库存（因为正负相抵）
+    sql = QStringLiteral("select a.stock, a.cargo, a.color, b.cgname, b.attr1, b.attr2, b.attr3, b.attr4, b.attr5, b.attr6 "
+                         "from qUKC a left join tCargo b on a.cargo=b.cargo "
+                         "group by a.stock, a.cargo, a.color, b.cgname, b.attr1, b.attr2, b.attr3, b.attr4, b.attr5, b.attr6 "
+                         "having sum(a.qty)<>0;");
+    qry.exec(sql);
+    if ( qry.lastError().isValid() ) qDebug() << qry.lastError().text() << sql;
+    while ( qry.next() ) {
+        QString cargo = qry.value(1).toString().trimmed();
+        if ( !setCargos.contains(cargo) ) {
+            mpGrdCargo->setRowCount(++rows);
+            QTableWidgetItem *itCargo = new QTableWidgetItem(cargo);
+            itCargo->setData(Qt::UserRole, qry.value(3).toString());
+            itCargo->setData(Qt::UserRole + 1, qry.value(4).toString());
+            itCargo->setData(Qt::UserRole + 2, qry.value(5).toString());
+            itCargo->setData(Qt::UserRole + 3, qry.value(6).toString());
+            itCargo->setData(Qt::UserRole + 4, qry.value(7).toString());
+            itCargo->setData(Qt::UserRole + 5, qry.value(8).toString());
+            itCargo->setData(Qt::UserRole + 6, qry.value(9).toString());
+            itCargo->setBackground(QColor(240, 240, 240));
+            itCargo->setFlags(Qt::ItemIsEnabled | Qt::ItemIsSelectable);
+            mpGrdCargo->setItem(rows - 1, 0, itCargo);
+            mpGrdCargo->setItem(rows - 1, 1, new QTableWidgetItem());
+            mpGrdCargo->setItem(rows - 1, 2, new QTableWidgetItem());
+            setCargos.insert(cargo);
+        }
+    }
+
+    //登记货号已经删除但仍有库存的部分
+    sql = QStringLiteral("select stock, cargo, color from qUKC group by stock, cargo, color having sum(qty)<>0;");
+    qry.exec(sql);
+    if ( qry.lastError().isValid() ) qDebug() << qry.lastError().text() << sql;
+    while ( qry.next() ) {
+        QString cargo = qry.value(1).toString().trimmed();
+        if ( !setCargos.contains(cargo) ) {
+            mpGrdCargo->setRowCount(++rows);
+            QTableWidgetItem *itCargo = new QTableWidgetItem(cargo);
+            itCargo->setBackground(QColor(240, 240, 240));
+            itCargo->setFlags(Qt::ItemIsEnabled | Qt::ItemIsSelectable);
+            mpGrdCargo->setItem(rows - 1, 0, itCargo);
+            mpGrdCargo->setItem(rows - 1, 1, new QTableWidgetItem());
+            mpGrdCargo->setItem(rows - 1, 2, new QTableWidgetItem());
+            setCargos.insert(cargo);
+        }
+    }
+
     mpGrdCargo->resizeColumnsToContents();
     mpGrdCargo->horizontalHeader()->setSectionResizeMode(0, QHeaderView::Stretch);
     mpGrdCargo->verticalHeader()->hide();
-    mpPnlExpTest->hide();
     mpBtnExpTest->hide();
 }
 
@@ -469,6 +497,7 @@ void BsImportR15Dlg::loadSizeTypeCordFile()
     }
 }
 
+//doImport
 void BsImportR15Dlg::doImport()
 {
     //检查
@@ -509,17 +538,49 @@ void BsImportR15Dlg::doImport()
         f.close();
     }
 
-    //大过程
-    qApp->setOverrideCursor(Qt::WaitCursor);
-    QString strErr = importToSqlite(mSqliteFile);
-    qApp->restoreOverrideCursor();
+    //先检查删除库文件
+    if ( QFile::exists(mSqliteFile) ) {
+        if ( ! QFile::remove(mSqliteFile) ) {
+            QMessageBox::information(this, QString(),
+                                     QStringLiteral("%1文件被占用，无法删除，请关闭Sqlite工具！").arg(mSqliteFile));
+            return;
+        }
+    }
+
+    //创建库文件并初始化为R17数据结构
+    QString strErr;
+    {
+        //初始化新数据库表结构完整SQL
+        QStringList sqls = BailiSoft::sqliteInitSqls(mBookName, true);
+
+        //启动数据库连接
+        QSqlDatabase sdb = QSqlDatabase::addDatabase("QSQLITE", mSqliteConn);
+        sdb.setDatabaseName(mSqliteFile);
+        if ( sdb.open() ) {
+            strErr = initNewSchema(sqls, sdb);
+        } else {
+            strErr = QStringLiteral("系统不支持Sqlite，%1创建不成功。错误信息：%2").arg(mSqliteFile).arg(sdb.lastError().text());
+        }
+
+        //执行导入过程
+        if ( strErr.isEmpty() ) {
+            QSqlDatabase mdb = QSqlDatabase::database(mAccessConn);
+            qApp->setOverrideCursor(Qt::WaitCursor);
+            strErr = importTableByTable(mdb, sdb);
+            qApp->restoreOverrideCursor();
+        }
+    }
+
+    //移除连接必须在addDatabase()作用域花括号外
+    QSqlDatabase::removeDatabase(mSqliteConn);
 
     //报告
     if ( strErr.isEmpty() ) {
         QMessageBox::information(this, QString(), QStringLiteral("导入成功！"));
         accept();   //调用外部使用mSqliteFile放到账册列表
-    } else
-        mpLblHelp->setText("导入失败！\n" + strErr);
+    } else {
+        mpLblHelp->setText(QStringLiteral("导入失败！\n%1").arg(strErr));
+    }
 }
 
 void BsImportR15Dlg::overDestroy()
@@ -555,7 +616,7 @@ void BsImportR15Dlg::regExpChanged(int currentRow, int currentColumn, int, int)
     mpBtnExpTest->setProperty("gridIsColor", grid == mpGrdColor);
     mpBtnExpTest->setGeometry(pt.x() - 38, pt.y() - 1, 40, 22);
     mpBtnExpTest->show();
-    mpPnlExpTest->hide();
+    mpBtnExpApply->setEnabled(false);
 }
 
 void BsImportR15Dlg::testRegExp()
@@ -599,19 +660,6 @@ void BsImportR15Dlg::switchColorFormat(const bool keepColorsCommaFormat)
 
 QString BsImportR15Dlg::checkReady()
 {
-    //尺码
-    if ( mpGrdSizer->rowCount() > 0 )
-    {
-        int nullCount = 0;
-        for ( int i = 0; i < mpGrdSizer->rowCount(); ++i ) {
-            if ( mpGrdSizer->item(i, 1)->text().isEmpty() ) {
-                nullCount++;
-            }
-        }
-        if ( nullCount > 0 )
-            return QStringLiteral("尺码表设置未完成！");
-    }
-
     //色号整理
     if ( ! mpChkColorFormat->isChecked() ) {
         int unPicks = 0;
@@ -730,51 +778,11 @@ void BsImportR15Dlg::matchCargoRegExp(const bool forTest)
     mpGrdCargo->horizontalHeader()->setSectionResizeMode(0, QHeaderView::Stretch);
 
     if ( forTest ) {
-        mpLblExpTest->setText(QStringLiteral("共 %1 货号，<font color='#080'><b>%2</b></font> 匹配 %3 个货号，红色显示如右。")
+        mpLblHelp->setText(QStringLiteral("共 %1 货号，<font color='#080'><b>%2</b></font> 匹配 %3 个货号，红色显示如右。")
                               .arg(mpGrdCargo->rowCount()).arg(strExp).arg(cordCount));
-        mpBtnExpApply->setText((useColor) ? QStringLiteral("填充货号色系") : QStringLiteral("填充货号品类"));
-        mpPnlExpTest->show();
+        mpBtnExpApply->setText((useColor) ? QStringLiteral("填入测试色系") : QStringLiteral("填入测试品类"));
     }
-    else {
-        mpPnlExpTest->hide();
-    }
-}
-
-QString BsImportR15Dlg::importToSqlite(const QString &sqliteFile)
-{
-    //先检查删除库文件
-    if ( QFile::exists(sqliteFile) ) {
-        if ( ! QFile::remove(sqliteFile) ) {
-            return QStringLiteral("%1文件被占用，无法删除，请关闭Sqlite工具！").arg(sqliteFile);
-        }
-    }
-
-    //创建库文件并初始化为R18数据结构
-    QString strErr;
-    {
-        //初始化新数据库表结构完整SQL
-        QStringList sqls = BailiSoft::sqliteInitSqls(mBookName, true);
-
-        //启动数据库连接
-        QSqlDatabase sdb = QSqlDatabase::addDatabase("QSQLITE", mSqliteConn);
-        sdb.setDatabaseName(sqliteFile);
-        if ( sdb.open() ) {
-            strErr = initNewSchema(sqls, sdb);
-        } else {
-            strErr = QStringLiteral("系统不支持Sqlite，%1创建不成功。错误信息：%2").arg(sqliteFile).arg(sdb.lastError().text());
-        }
-
-        //执行导入过程
-        if ( strErr.isEmpty() ) {
-            QSqlDatabase mdb = QSqlDatabase::database(mAccessConn);
-            strErr = importTableByTable(mdb, sdb);
-        }
-    }
-
-    //移除连接必须在addDatabase()作用域花括号外
-    QSqlDatabase::removeDatabase(mSqliteConn);
-
-    return strErr;
+    mpBtnExpApply->setEnabled(true);
 }
 
 QString BsImportR15Dlg::initNewSchema(const QStringList &sqls, QSqlDatabase &newdb)
@@ -804,7 +812,8 @@ QString BsImportR15Dlg::initNewSchema(const QStringList &sqls, QSqlDatabase &new
     return strErr;
 }
 
-QString BsImportR15Dlg::importTableByTable(QSqlDatabase &mdb, QSqlDatabase &newdb)  //execute table by table
+//execute table by table
+QString BsImportR15Dlg::importTableByTable(QSqlDatabase &mdb, QSqlDatabase &newdb)
 {
     //在后面导入过程中初始化
     mapSetPrice.clear();
@@ -838,7 +847,7 @@ QString BsImportR15Dlg::importTableByTable(QSqlDatabase &mdb, QSqlDatabase &newd
         strErr = importBaseRef("tCustomer", "customer", mdb, newdb);
 
     if ( mpChkOnlyStock->isChecked() ) {
-        strErr = importStockAsCGJ(mdb, newdb);
+        strErr = importStockAsInitSYD(mdb, newdb);
     }
     else {
         if ( strErr.isEmpty() )
@@ -900,12 +909,14 @@ QString BsImportR15Dlg::prepareSizeMap()
     mOldSizeTypeCount = mpGrdSizer->rowCount();
     mOldSizeColCount = mpGrdSizer->item(0, 0)->data(Qt::UserRole).toStringList().count();
 
+    vecSizerType.clear();
     for ( int i = 0; i < mpGrdSizer->rowCount(); i++ ) {
-        QString exp = mpGrdSizer->item(i, 1)->text();
+        QString typeName = mpGrdSizer->item(i, 1) ? mpGrdSizer->item(i, 1)->text().trimmed() : QString();
         QStringList sizers = mpGrdSizer->item(i, 0)->data(Qt::UserRole).toStringList();
-        vecSizerType << qMakePair(exp, sizers);
+        vecSizerType << qMakePair(typeName, sizers);
     }
 
+    mapSizerType.clear();
     for ( int i = 0, iLen = mpGrdCargo->rowCount(); i < iLen; ++i ) {
         mapSizerType.insert(mpGrdCargo->item(i, 0)->text(), mpGrdCargo->item(i, 1)->data(Qt::UserRole).toInt());
     }
@@ -918,8 +929,11 @@ QString BsImportR15Dlg::importSizerType(QSqlDatabase &newdb)
     QStringList sqls;
 
     for ( int i = 0, iLen = mpGrdSizer->rowCount(); i < iLen; ++i ) {
-        sqls << QStringLiteral("insert into sizertype(tname, namelist) values('%1', '%2');")
-                .arg(mpGrdSizer->item(i, 1)->text()).arg(mpGrdSizer->item(i, 0)->text());
+        QString typeName = mpGrdSizer->item(i, 1) ? mpGrdSizer->item(i, 1)->text().trimmed() : QString();
+        if ( !typeName.isEmpty() ) {
+            sqls << QStringLiteral("insert into sizertype(tname, namelist) values('%1', '%2');")
+                    .arg(mpGrdSizer->item(i, 1)->text()).arg(mpGrdSizer->item(i, 0)->text());
+        }
     }
 
     return batchExec(sqls, newdb);
@@ -1090,7 +1104,7 @@ QString BsImportR15Dlg::importSheet(const QString &oldSheet, const QString &newS
     while ( mqry.next() ) {
 
         int sheetId = mqry.value(0).toInt();
-        QString cargo = mqry.value(1).toString();
+        QString cargo = mqry.value(1).toString().trimmed();  //必须trimmed
         QString color = mqry.value(2).toString();
         double actPrice = mqry.value(3).toDouble();
         int actQty = mqry.value(4).toInt();
@@ -1166,7 +1180,7 @@ QString BsImportR15Dlg::importSheet(const QString &oldSheet, const QString &newS
     return batchExec(sqls, newdb);
 }
 
-QString BsImportR15Dlg::importStockAsCGJ(QSqlDatabase &mdb, QSqlDatabase &newdb)
+QString BsImportR15Dlg::importStockAsInitSYD(QSqlDatabase &mdb, QSqlDatabase &newdb)
 {
     QStringList sqls;
     QSqlQuery mqry(mdb);
@@ -1190,7 +1204,7 @@ QString BsImportR15Dlg::importStockAsCGJ(QSqlDatabase &mdb, QSqlDatabase &newdb)
         sheetId++;
         QDate dateD = QDateTime::currentDateTime().date();
         qint64 nowTime = QDateTime::currentMSecsSinceEpoch();
-        QString sql = QStringLiteral("insert into CGJ("
+        QString sql = QStringLiteral("insert into syd("
                                      "sheetID, proof, dateD, shop, trader, stype, staff, remark, "
                                      "checker, chktime, upMan, upTime) "
                                      "values(%1, '导入期初', %2, '%3', '导入期初', '导入期初', '系统', '', "
@@ -1209,7 +1223,7 @@ QString BsImportR15Dlg::importStockAsCGJ(QSqlDatabase &mdb, QSqlDatabase &newdb)
         //R15行遍历
         while ( mqry.next() ) {
 
-            QString cargo = mqry.value(0).toString();
+            QString cargo = mqry.value(0).toString().trimmed();     //必须trimmed
             QString color = mqry.value(1).toString();
             int actQty = mqry.value(2).toInt();
 
@@ -1254,8 +1268,8 @@ QString BsImportR15Dlg::importStockAsCGJ(QSqlDatabase &mdb, QSqlDatabase &newdb)
                 }
             }
 
-            //SQL   （教训：values()中逗号后慎加空格，因为sqlite奇葩整形会存储字符串型！）
-            QString sql = QStringLiteral("insert into cgjdtl(parentid, rowtime, cargo, color, sizers, "
+            //SQL   （教训：sql insert 语句 values()中逗号后慎加空格，因为sqlite奇葩整形会存储字符串型！）
+            QString sql = QStringLiteral("insert into syddtl(parentid, rowtime, cargo, color, sizers, "
                                          "price, qty, discount, actMoney, disMoney) "
                                          "values(%1,%2,'%3','%4','%5',0,%6,0,0,0);")
                     .arg(sheetId)

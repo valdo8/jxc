@@ -45,7 +45,6 @@ private:
     void switchColorFormat(const bool keepColorsCommaFormat);
     QString checkReady();
     void matchCargoRegExp(const bool forTest);
-    QString importToSqlite(const QString &sqliteFile);
     QString initNewSchema(const QStringList &sqls, QSqlDatabase &newdb);
     QString importTableByTable(QSqlDatabase &mdb, QSqlDatabase &newdb);
 
@@ -56,7 +55,7 @@ private:
     QString importStaff(QSqlDatabase &mdb, QSqlDatabase &newdb);
     QString importBaseRef(const QString &oldTable, const QString &newTable, QSqlDatabase &mdb, QSqlDatabase &newdb);
     QString importSheet(const QString &oldSheet, const QString &newSheet, QSqlDatabase &mdb, QSqlDatabase &newdb);
-    QString importStockAsCGJ(QSqlDatabase &mdb, QSqlDatabase &newdb);
+    QString importStockAsInitSYD(QSqlDatabase &mdb, QSqlDatabase &newdb);
     QString updateSheetSum(const QString &sheet, QSqlDatabase &newdb);
     QString saveDebugTestData(QSqlDatabase &newdb);
 
@@ -64,8 +63,6 @@ private:
     QString getOldSizeColSum(const QString &prefix = QString());
     QString batchExec(const QStringList &sqls, QSqlDatabase &newdb);
 
-    QWidget         *mpPnlExpTest;
-    QLabel              *mpLblExpTest;
     QPushButton         *mpBtnExpApply;
     QLabel          *mpLblHelp;
     BsR15UpgSetGrid    *mpGrdSizer;

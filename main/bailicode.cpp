@@ -4,12 +4,17 @@
 #include <QSqlDatabase>
 #include <QSqlQuery>
 
+/* 血坑记录：
+ * sql insert 语句 values()中逗号后不要乱加空格，因为sqlite奇葩整形会存储字符串型！
+ *
+ * */
+
 namespace BailiSoft {
 
 //版本号
 int lxapp_version_major = 17;
 int lxapp_version_minor = 3;
-int lxapp_version_patch = 2;
+int lxapp_version_patch = 3;
 /*
 ... 帮助文档————登记推荐实践零售与批发、本店与代销
 2.0.ok 爱美无价平台功能上线
@@ -26,6 +31,8 @@ int lxapp_version_patch = 2;
 2.8.ok 行备注字数增加到支持200字
 3.1.ok 导入CSV格式单据
 3.2.ok 前端录入单据标牌价未显示
+3.3.ok 登记窗口新增行跳窗模式增加了空格检查
+3.3.ok “登记名批量修改器”货品修改不应该有的货号限制
 */
 
 //表基名（英）

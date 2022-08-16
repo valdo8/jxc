@@ -2301,6 +2301,8 @@ QString BsQryWin::doSqliteQuery()
     QString sql = QStringLiteral("SELECT %1 FROM %2 %3 %4 %5 %6;")
             .arg(selExps.join(QChar(44))).arg(mFromSource).arg(whereSql).arg(grpSql).arg(havSql).arg(orderSql);
 
+    qDebug() << "last sql: " << sql;
+
     //刷新表格
     QString useSizerType = ( mpConSizerType ) ? mpConSizerType->mpEditor->getDataValue() : QString();
     mpQryGrid->loadData(sql, cnameDefines, useSizerType);
@@ -2723,7 +2725,7 @@ void BsRegWin::doNew()
         for ( int i = 0, iLen = dlg.mEditors.length(); i < iLen; ++i ) {
             BsFldEditor *edt = dlg.mEditors.at(i)->mpEditor;
             flds << edt->mpField->mFldName;
-            QString txt = edt->text();
+            QString txt = edt->text().trimmed();
             if ( edt->mpField->mFldName == QStringLiteral("setprice") ) {
                 bool ok;
                 double val = txt.toDouble(&ok);
